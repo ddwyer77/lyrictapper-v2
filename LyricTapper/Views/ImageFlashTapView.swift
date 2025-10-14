@@ -38,16 +38,34 @@ struct ImageFlashTapView: View {
                 app.stage = .imageEdit
             }
             .background(Color.clear)
+            .allowsHitTesting(false)
 
             HStack(spacing: 12) {
-                Button(audio.isPlaying ? "Pause" : "Play") { do { try audio.toggle() } catch { } }
+                Button(audio.isPlaying ? "Pause" : "Play") {
+                    do {
+                        try audio.toggle()
+                        if audio.isPlaying == false {
+                            // If toggle failed to start, try reloading the file
+                            if let data = app.project.audioPathBookmark, let url = BookmarkService.resolveBookmark(data) {
+                                do { try audio.loadFile(url: url) } catch { }
+                            }
+                        }
+                    } catch { }
+                }
                 Button("Restart Take (R)") {
                     audio.resetToStart()
                     app.project.imageTapTimestamps.removeAll()
                     currentIndex = 0
                 }
                 Spacer()
-                Button("Continue to Edit") { app.stage = .imageEdit }
+                Button("Continue to Edit") {
+                    app.project.imageIntervals = TimingService.computeImageIntervals(
+                        taps: app.project.imageTapTimestamps,
+                        audioDuration: app.project.audioDuration,
+                        imageOrder: app.project.imageFileIDs
+                    )
+                    app.stage = .imageEdit
+                }
             }
             .padding(.top, 8)
 
