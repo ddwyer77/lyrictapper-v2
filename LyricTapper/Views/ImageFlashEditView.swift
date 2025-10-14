@@ -22,7 +22,7 @@ struct ImageFlashEditView: View {
                 }
                 TableColumn("Thumb") { item in
                     if let url = resolveURL(item.fileID), let cg = decodeCache.decodedScaledToWidth(url: url) {
-                        Image(decorative: NSImage(cgImage: cg, size: .zero), scale: 1.0)
+                        Image(nsImage: NSImage(cgImage: cg, size: .zero))
                             .resizable()
                             .frame(width: 80, height: 80)
                             .clipped()
