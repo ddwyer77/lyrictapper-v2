@@ -424,11 +424,13 @@ private func renderImageFlashVideoOnly(to outputURL: URL, audioURL: URL, interva
     var frameTime = CMTime.zero
     var frameIndex = 0
 
-    // Pre-resolve URLs for intervals
-    let fileIdToURL: [ImageFileID: URL] = Dictionary(uniqueKeysWithValues: intervals.compactMap { iv in
-        guard let url = BookmarkService.resolveBookmark(iv.fileID.urlBookmark) else { return nil }
-        return (iv.fileID, url)
-    })
+    // Pre-resolve URLs for intervals (deduplicate keys to avoid crash)
+    var fileIdToURL: [ImageFileID: URL] = [:]
+    for iv in intervals {
+        if fileIdToURL[iv.fileID] == nil, let url = BookmarkService.resolveBookmark(iv.fileID.urlBookmark) {
+            fileIdToURL[iv.fileID] = url
+        }
+    }
     let decodeCache = ImageDecodeCache(targetWidth: width)
 
     while frameIndex < totalFrames {
