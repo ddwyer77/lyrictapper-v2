@@ -49,6 +49,7 @@ struct ImageFlashTapView: View {
                 Spacer()
                 Button("Continue to Edit") { app.stage = .imageEdit }
             }
+            .padding(.top, 8)
 
             ZStack {
                 Rectangle().fill(Color.black)
@@ -68,7 +69,8 @@ struct ImageFlashTapView: View {
                         .foregroundColor(.secondary)
                 }
             }
-            .frame(minHeight: 360)
+            .frame(height: 480)
+            .clipped()
 
             if !app.waveform.isEmpty {
                 WaveformScrubView(app: app, audio: audio)
