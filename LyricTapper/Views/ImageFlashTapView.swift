@@ -86,12 +86,16 @@ struct ImageFlashTapView: View {
                     GeometryReader { geo in
                         let canvasW: CGFloat = geo.size.width
                         let canvasH: CGFloat = geo.size.height
-                        let scale = canvasW / CGFloat(cg.width)
-                        let destH = CGFloat(cg.height) * scale
+                        let iw = CGFloat(cg.width)
+                        let ih = CGFloat(cg.height)
+                        let scale = min(canvasW / iw, canvasH / ih)
+                        let destW = iw * scale
+                        let destH = ih * scale
+                        let x = (canvasW - destW) / 2.0
                         let y = (canvasH - destH) / 2.0
                         CGContextImageView(cgImage: cg)
-                            .frame(width: canvasW, height: destH)
-                            .position(x: canvasW / 2.0, y: y + destH / 2.0)
+                            .frame(width: destW, height: destH)
+                            .position(x: x + destW / 2.0, y: y + destH / 2.0)
                     }
                 } else {
                     Text("Select a folder with images to begin.")
