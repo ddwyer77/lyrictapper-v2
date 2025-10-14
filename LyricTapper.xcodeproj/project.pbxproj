@@ -45,19 +45,19 @@ ABF2F0070000000000000001 /* LyricTapper/Views/ImageFlashExportView.swift in Sour
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		C99F868D2E9AF40D00627C27 /* PBXContainerItemProxy */ = {
+        C99F868D2E9AF40D00627C27 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA0009010000000000000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = C99F867B2E9AF40B00627C27;
-			remoteInfo = "Lyric Tapper";
+            remoteGlobalIDString = AA0005010000000000000001;
+            remoteInfo = LyricTapper;
 		};
 		C99F86972E9AF40D00627C27 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA0009010000000000000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = C99F867B2E9AF40B00627C27;
-			remoteInfo = "Lyric Tapper";
+            remoteGlobalIDString = AA0005010000000000000001;
+            remoteInfo = LyricTapper;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -261,28 +261,7 @@ ABF1F0070000000000000001 /* LyricTapper/Views/ImageFlashExportView.swift */ = {i
 			productReference = C99F86772E9AF3AE00627C27 /* LyricTapper.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C99F867B2E9AF40B00627C27 /* Lyric Tapper */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = C99F86A42E9AF40D00627C27 /* Build configuration list for PBXNativeTarget "Lyric Tapper" */;
-			buildPhases = (
-				C99F86782E9AF40B00627C27 /* Sources */,
-				C99F86792E9AF40B00627C27 /* Frameworks */,
-				C99F867A2E9AF40B00627C27 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				C99F867D2E9AF40B00627C27 /* Lyric Tapper */,
-			);
-			name = "Lyric Tapper";
-			packageProductDependencies = (
-			);
-			productName = "Lyric Tapper";
-			productReference = C99F867C2E9AF40B00627C27 /* Lyric Tapper.app */;
-			productType = "com.apple.product-type.application";
-		};
+/* Removed duplicate app target "Lyric Tapper" */
 		C99F868B2E9AF40D00627C27 /* Lyric TapperTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C99F86A52E9AF40D00627C27 /* Build configuration list for PBXNativeTarget "Lyric TapperTests" */;
@@ -366,9 +345,8 @@ ABF1F0070000000000000001 /* LyricTapper/Views/ImageFlashExportView.swift */ = {i
 			projectRoot = "";
 			targets = (
 				AA0005010000000000000001 /* LyricTapper */,
-				C99F867B2E9AF40B00627C27 /* Lyric Tapper */,
-				C99F868B2E9AF40D00627C27 /* Lyric TapperTests */,
-				C99F86952E9AF40D00627C27 /* Lyric TapperUITests */,
+			C99F868B2E9AF40D00627C27 /* Lyric TapperTests */,
+			C99F86952E9AF40D00627C27 /* Lyric TapperUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -471,14 +449,14 @@ ABF1F0070000000000000001 /* LyricTapper/Views/ImageFlashExportView.swift */ = {i
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		C99F868E2E9AF40D00627C27 /* PBXTargetDependency */ = {
+        C99F868E2E9AF40D00627C27 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C99F867B2E9AF40B00627C27 /* Lyric Tapper */;
+            target = AA0005010000000000000001 /* LyricTapper */;
 			targetProxy = C99F868D2E9AF40D00627C27 /* PBXContainerItemProxy */;
 		};
 		C99F86982E9AF40D00627C27 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C99F867B2E9AF40B00627C27 /* Lyric Tapper */;
+            target = AA0005010000000000000001 /* LyricTapper */;
 			targetProxy = C99F86972E9AF40D00627C27 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
