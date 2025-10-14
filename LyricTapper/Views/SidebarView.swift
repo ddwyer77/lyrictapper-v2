@@ -6,12 +6,10 @@ struct SidebarView: View {
     var body: some View {
         List(selection: $app.stage) {
             Section {
-                Button {
-                    app.stage = .home
-                } label: {
-                    Label("Home", systemImage: "house")
-                }
-                .buttonStyle(.plain)
+                Button { app.stage = .home } label: { Label("Home", systemImage: "house") }
+                    .buttonStyle(.plain)
+                Button { app.stage = .dashboard } label: { Label("Dashboard", systemImage: "rectangle.grid.2x2") }
+                    .buttonStyle(.plain)
             }
             if app.activeTool == .lyrics {
                 Section("Lyric Tool") {

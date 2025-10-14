@@ -59,7 +59,7 @@ struct ProjectsLandingView: View {
             let asset = AVAsset(url: url)
             let durationSeconds = CMTimeGetSeconds(asset.duration)
             app.setAudioDuration(seconds: durationSeconds)
-            app.switchTool(tool)
+            app.stage = .dashboard
         } catch {
             status = "Failed: \(error.localizedDescription)"
         }

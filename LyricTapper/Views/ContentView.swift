@@ -11,6 +11,8 @@ struct ContentView: View {
             switch app.stage {
             case .home:
                 ProjectsLandingView(app: app)
+            case .dashboard:
+                DashboardView(app: app)
             case .loadAudio:
                 LoadAudioView(app: app)
             case .enterLyrics:

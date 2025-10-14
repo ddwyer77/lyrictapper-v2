@@ -12,6 +12,7 @@ enum ToolKind: String, Codable, CaseIterable, Identifiable {
 final class AppState: ObservableObject {
     enum Stage: String, Codable, CaseIterable, Identifiable {
         case home
+        case dashboard
         // Lyric tool stages
         case loadAudio
         case enterLyrics
