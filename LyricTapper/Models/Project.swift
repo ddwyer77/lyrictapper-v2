@@ -31,8 +31,42 @@ struct Project: Identifiable, Codable, Equatable {
 
     var exportSettings: ExportSettings
     var tapMode: TapMode = .perWord
+
+    // Tool mode
+    var mode: ToolKind = .lyrics
+
+    // Image Flash fields
+    var imageFolderBookmark: Data? = nil
+    var includeSubfolders: Bool = false
+    var skipDuplicateImages: Bool = true
+    var imageFileIDs: [ImageFileID] = []
+    var imageCatalog: [ImageFileID: ImageMeta] = [:]
+    var shuffleSeed: UInt64? = nil
+    var imageTapTimestamps: [Double] = []
+    var imageIntervals: [ImageInterval] = []
 }
 
 enum TapMode: String, Codable, Equatable { case perWord, perSyllable }
+
+// MARK: - Image Flash Models
+
+struct ImageFileID: Hashable, Codable {
+    let urlBookmark: Data
+}
+
+struct ImageMeta: Codable, Equatable {
+    let originalFilename: String
+    let pixelWidth: Int
+    let pixelHeight: Int
+    let uti: String
+    let fileSize: Int64?
+    let fastHash: String?
+}
+
+struct ImageInterval: Codable, Equatable {
+    let fileID: ImageFileID
+    var start: Double
+    var end: Double
+}
 
 

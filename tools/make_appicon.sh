@@ -12,10 +12,11 @@ if ! command -v sips >/dev/null 2>&1; then
   exit 1
 fi
 
-ASSET_DIR="LyricTapper/Assets.xcassets/AppIcon.appiconset"
-mkdir -p "$ASSET_DIR"
+generate_for_dir() {
+  local ASSET_DIR="$1"
+  mkdir -p "$ASSET_DIR"
 
-cat >"$ASSET_DIR/Contents.json" <<'JSON'
+  cat >"$ASSET_DIR/Contents.json" <<'JSON'
 {
   "images" : [
     { "idiom" : "mac", "size" : "16x16",  "scale" : "1x", "filename" : "16.png" },
@@ -33,18 +34,23 @@ cat >"$ASSET_DIR/Contents.json" <<'JSON'
 }
 JSON
 
-# Generate sizes
-sips -z 16 16   "$SRC" --out "$ASSET_DIR/16.png" >/dev/null
-sips -z 32 32   "$SRC" --out "$ASSET_DIR/32.png" >/dev/null
-sips -z 32 32   "$SRC" --out "$ASSET_DIR/32-1x.png" >/dev/null
-sips -z 64 64   "$SRC" --out "$ASSET_DIR/64.png" >/dev/null
-sips -z 128 128 "$SRC" --out "$ASSET_DIR/128.png" >/dev/null
-sips -z 256 256 "$SRC" --out "$ASSET_DIR/256.png" >/dev/null
-sips -z 256 256 "$SRC" --out "$ASSET_DIR/256-1x.png" >/dev/null
-sips -z 512 512 "$SRC" --out "$ASSET_DIR/512.png" >/dev/null
-sips -z 512 512 "$SRC" --out "$ASSET_DIR/512-1x.png" >/dev/null
-cp "$SRC" "$ASSET_DIR/1024.png"
+  # Generate sizes (always scale explicitly; never copy raw to ensure exact px)
+  sips -z 16 16   "$SRC" --out "$ASSET_DIR/16.png" >/dev/null
+  sips -z 32 32   "$SRC" --out "$ASSET_DIR/32.png" >/dev/null
+  sips -z 32 32   "$SRC" --out "$ASSET_DIR/32-1x.png" >/dev/null
+  sips -z 64 64   "$SRC" --out "$ASSET_DIR/64.png" >/dev/null
+  sips -z 128 128 "$SRC" --out "$ASSET_DIR/128.png" >/dev/null
+  sips -z 256 256 "$SRC" --out "$ASSET_DIR/256.png" >/dev/null
+  sips -z 256 256 "$SRC" --out "$ASSET_DIR/256-1x.png" >/dev/null
+  sips -z 512 512 "$SRC" --out "$ASSET_DIR/512.png" >/dev/null
+  sips -z 512 512 "$SRC" --out "$ASSET_DIR/512-1x.png" >/dev/null
+  sips -z 1024 1024 "$SRC" --out "$ASSET_DIR/1024.png" >/dev/null
 
-echo "AppIcon assets updated in $ASSET_DIR"
+  echo "AppIcon assets updated in $ASSET_DIR"
+}
+
+# Generate for both targets' asset catalogs
+generate_for_dir "LyricTapper/Assets.xcassets/AppIcon.appiconset"
+generate_for_dir "Lyric Tapper/Assets.xcassets/AppIcon.appiconset"
 
 

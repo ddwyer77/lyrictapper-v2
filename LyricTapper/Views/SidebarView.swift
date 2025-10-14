@@ -6,23 +6,28 @@ struct SidebarView: View {
     var body: some View {
         List(selection: $app.stage) {
             Section {
-                Label("Lyric Tapper", systemImage: "music.note")
-                    .font(.headline)
-                EmptyView()
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                Button {
+                    app.stage = .home
+                } label: {
+                    Label("Home", systemImage: "house")
+                }
+                .buttonStyle(.plain)
             }
-            Section("Steps") {
-                Label("Load Audio", systemImage: "folder")
-                    .tag(AppState.Stage.loadAudio)
-                Label("Enter Lyrics", systemImage: "text.justify")
-                    .tag(AppState.Stage.enterLyrics)
-                Label("Tap", systemImage: "hand.tap")
-                    .tag(AppState.Stage.tap)
-                Label("Edit", systemImage: "table")
-                    .tag(AppState.Stage.edit)
-                Label("Export", systemImage: "square.and.arrow.up")
-                    .tag(AppState.Stage.export)
+            if app.activeTool == .lyrics {
+                Section("Lyric Tool") {
+                    Label("Load Audio", systemImage: "folder").tag(AppState.Stage.loadAudio)
+                    Label("Enter Lyrics", systemImage: "text.justify").tag(AppState.Stage.enterLyrics)
+                    Label("Tap", systemImage: "hand.tap").tag(AppState.Stage.tap)
+                    Label("Edit", systemImage: "table").tag(AppState.Stage.edit)
+                    Label("Export", systemImage: "square.and.arrow.up").tag(AppState.Stage.export)
+                }
+            } else {
+                Section("Image Flash") {
+                    Label("Load Images", systemImage: "folder").tag(AppState.Stage.loadImages)
+                    Label("Tap", systemImage: "hand.tap").tag(AppState.Stage.imageTap)
+                    Label("Edit", systemImage: "table").tag(AppState.Stage.imageEdit)
+                    Label("Export", systemImage: "square.and.arrow.up").tag(AppState.Stage.imageExport)
+                }
             }
         }
         .listStyle(SidebarListStyle())

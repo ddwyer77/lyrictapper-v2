@@ -36,4 +36,17 @@ This is the SwiftUI scaffolding for a Mac App Store–compliant rebuild of Lyric
 - Waveform generation is scaffolded to use `AVAssetReader` + Accelerate/vDSP.
 - Timing computation matches the existing Electron logic.
 
+## Image Flash
+
+Create a hard-cut 9:16 video where each tap advances to a new random image from a selected folder.
+
+Steps:
+1. Open the app to the Home screen and choose "Image Flash".
+2. Load an audio file (Choose Audio…).
+3. Choose an image folder. Optionally enable "Include subfolders" and "Skip duplicate images".
+4. Tap view: Press Space while audio plays to advance images. Use R to "Restart Take (R)". Press Enter to proceed.
+5. Edit intervals as needed (swap, delete, nudge). Then go to Export to Render Preview or Export Video. Use "Reshuffle Images" to change the image order deterministically.
+
+Output is locked to 1080×1920 @ 30fps, images scaled to full width on a black background with hard cuts, and original audio muxed.
+
 

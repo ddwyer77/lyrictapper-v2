@@ -353,4 +353,128 @@ private func muxAudioVideo(audioURL: URL, videoURL: URL, destinationURL: URL) th
     if let e = exportErr { throw e }
 }
 
+// MARK: - Image Flash Export
+
+extension ExportService {
+    static func renderImageFlashPreview(
+        audioURL: URL,
+        intervals: [ImageInterval],
+        destinationSize: CGSize,
+        completion: @escaping (Result<URL, Error>) -> Void
+    ) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let tempDir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+                let videoOnlyURL = tempDir.appendingPathComponent("image_flash_preview_\(UUID().uuidString).mp4")
+                try renderImageFlashVideoOnly(to: videoOnlyURL, audioURL: audioURL, intervals: intervals, width: Int(destinationSize.width), height: Int(destinationSize.height), fps: 30)
+                completion(.success(videoOnlyURL))
+            } catch { completion(.failure(error)) }
+        }
+    }
+
+    static func exportImageFlash(
+        audioURL: URL,
+        intervals: [ImageInterval],
+        destinationURL: URL,
+        completion: @escaping (Result<URL, Error>) -> Void
+    ) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                if FileManager.default.fileExists(atPath: destinationURL.path) { try? FileManager.default.removeItem(at: destinationURL) }
+                let tempDir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+                let videoOnlyURL = tempDir.appendingPathComponent("image_flash_video_\(UUID().uuidString).mp4")
+                try renderImageFlashVideoOnly(to: videoOnlyURL, audioURL: audioURL, intervals: intervals, width: 1080, height: 1920, fps: 30)
+                try muxAudioVideo(audioURL: audioURL, videoURL: videoOnlyURL, destinationURL: destinationURL)
+                completion(.success(destinationURL))
+            } catch { completion(.failure(error)) }
+        }
+    }
+}
+
+private func renderImageFlashVideoOnly(to outputURL: URL, audioURL: URL, intervals: [ImageInterval], width: Int, height: Int, fps: Int) throws {
+    let duration = try audioDuration(audioURL)
+    let writer = try AVAssetWriter(outputURL: outputURL, fileType: .mp4)
+    let videoSettings: [String: Any] = [
+        AVVideoCodecKey: AVVideoCodecType.h264,
+        AVVideoWidthKey: width,
+        AVVideoHeightKey: height,
+        AVVideoCompressionPropertiesKey: [
+            AVVideoAverageBitRateKey: 14_000_000,
+            AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel
+        ]
+    ]
+    let videoInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings)
+    videoInput.expectsMediaDataInRealTime = false
+    guard writer.canAdd(videoInput) else { throw ExportServiceError.writerFailed }
+    writer.add(videoInput)
+    let srcAttrs: [String: Any] = [
+        kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+        kCVPixelBufferWidthKey as String: width,
+        kCVPixelBufferHeightKey as String: height,
+        kCVPixelBufferCGImageCompatibilityKey as String: true,
+        kCVPixelBufferCGBitmapContextCompatibilityKey as String: true,
+        kCVPixelBufferIOSurfacePropertiesKey as String: [:]
+    ]
+    let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: videoInput, sourcePixelBufferAttributes: srcAttrs)
+    writer.startWriting()
+    writer.startSession(atSourceTime: .zero)
+    guard let pool = adaptor.pixelBufferPool else { throw ExportServiceError.writerFailed }
+    let frameDuration = CMTime(value: 1, timescale: CMTimeScale(fps))
+    let totalFrames = Int(ceil(duration * Double(fps)))
+    var frameTime = CMTime.zero
+    var frameIndex = 0
+
+    // Pre-resolve URLs for intervals
+    let fileIdToURL: [ImageFileID: URL] = Dictionary(uniqueKeysWithValues: intervals.compactMap { iv in
+        guard let url = BookmarkService.resolveBookmark(iv.fileID.urlBookmark) else { return nil }
+        return (iv.fileID, url)
+    })
+    let decodeCache = ImageDecodeCache(targetWidth: width)
+
+    while frameIndex < totalFrames {
+        autoreleasepool {
+            while !videoInput.isReadyForMoreMediaData { Thread.sleep(forTimeInterval: 0.002) }
+            var pxbufOut: CVPixelBuffer? = nil
+            CVPixelBufferPoolCreatePixelBuffer(nil, pool, &pxbufOut)
+            guard let pb = pxbufOut else { return }
+            CVPixelBufferLockBaseAddress(pb, [])
+            if let base = CVPixelBufferGetBaseAddress(pb) {
+                let ctx = CGContext(
+                    data: base,
+                    width: width,
+                    height: height,
+                    bitsPerComponent: 8,
+                    bytesPerRow: CVPixelBufferGetBytesPerRow(pb),
+                    space: CGColorSpaceCreateDeviceRGB(),
+                    bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+                )
+                ctx?.setFillColor(NSColor.black.cgColor)
+                ctx?.fill(CGRect(x: 0, y: 0, width: width, height: height))
+                let t = Double(frameIndex) / Double(fps)
+                if let iv = intervals.first(where: { t >= $0.start && t < $0.end }) {
+                    if let url = fileIdToURL[iv.fileID], let cg = decodeCache.decodedScaledToWidth(url: url) {
+                        let scale = CGFloat(width) / CGFloat(cg.width)
+                        let destH = Int(CGFloat(cg.height) * scale)
+                        let y = (height - destH) / 2
+                        ctx?.interpolationQuality = .high
+                        ctx?.draw(cg, in: CGRect(x: 0, y: y, width: width, height: destH))
+                    } else {
+                        Logger.logAsync(.warn, "Missing or unreadable image during export", context: "interval t=\(t)")
+                    }
+                }
+            }
+            CVPixelBufferUnlockBaseAddress(pb, [])
+            let ok = adaptor.append(pb, withPresentationTime: frameTime)
+            if !ok { videoInput.markAsFinished(); writer.cancelWriting(); return }
+        }
+        frameIndex += 1
+        frameTime = CMTimeAdd(frameTime, frameDuration)
+    }
+
+    videoInput.markAsFinished()
+    let g = DispatchGroup(); g.enter(); writer.finishWriting { g.leave() }; g.wait()
+    if writer.status != .completed { throw writer.error ?? ExportServiceError.writerFailed }
+}
+
+
 

@@ -2,18 +2,32 @@ import Foundation
 import SwiftUI
 import AVFoundation
 
+enum ToolKind: String, Codable, CaseIterable, Identifiable {
+    case lyrics
+    case imageFlash
+    var id: String { rawValue }
+}
+
 @MainActor
 final class AppState: ObservableObject {
     enum Stage: String, Codable, CaseIterable, Identifiable {
+        case home
+        // Lyric tool stages
         case loadAudio
         case enterLyrics
         case tap
         case edit
         case export
+        // Image Flash stages
+        case loadImages
+        case imageTap
+        case imageEdit
+        case imageExport
         var id: String { rawValue }
     }
 
-    @Published var stage: Stage = .loadAudio
+    @Published var stage: Stage = .home
+    @Published var activeTool: ToolKind = .lyrics
     @Published var project: Project
     @Published var waveform: [WaveformBin] = []
     @Published var showLogs: Bool = false
@@ -37,6 +51,19 @@ final class AppState: ObservableObject {
             offsetMs: 0,
             exportSettings: defaultSettings
         )
+        self.project.mode = .lyrics
+    }
+
+    func switchTool(_ tool: ToolKind) {
+        activeTool = tool
+        switch tool {
+        case .lyrics:
+            stage = .loadAudio
+            project.mode = .lyrics
+        case .imageFlash:
+            stage = .loadImages
+            project.mode = .imageFlash
+        }
     }
 
     func updateLyrics(_ text: String) {

@@ -82,6 +82,27 @@ enum TimingService {
     }
 }
 
+extension TimingService {
+    static func computeImageIntervals(taps: [Double], audioDuration: Double, imageOrder: [ImageFileID]) -> [ImageInterval] {
+        guard audioDuration > 0, !imageOrder.isEmpty else { return [] }
+        let n = taps.count
+        guard n > 0 else { return [] }
+        var out: [ImageInterval] = []
+        out.reserveCapacity(n)
+        var lastEnd = 0.0
+        for i in 0..<n {
+            let startRaw = max(0.0, min(taps[i], audioDuration))
+            let endRaw: Double = (i < n - 1) ? max(0.0, min(taps[i + 1], audioDuration)) : audioDuration
+            let start = max(startRaw, lastEnd)
+            let end = max(endRaw, start)
+            let file = imageOrder[i % imageOrder.count]
+            out.append(ImageInterval(fileID: file, start: start, end: end))
+            lastEnd = end
+        }
+        return out
+    }
+}
+
 private extension Double {
     func clamped(to range: ClosedRange<Double>) -> Double {
         return min(max(self, range.lowerBound), range.upperBound)

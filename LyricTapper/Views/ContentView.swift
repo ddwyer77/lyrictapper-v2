@@ -9,6 +9,8 @@ struct ContentView: View {
                 .frame(minWidth: 220)
         } detail: {
             switch app.stage {
+            case .home:
+                HomeView(app: app)
             case .loadAudio:
                 LoadAudioView(app: app)
             case .enterLyrics:
@@ -33,6 +35,23 @@ struct ContentView: View {
                     if app.showLogs {
                         LogsPanelView(logger: app.logger)
                     }
+                }
+            case .loadImages:
+                LoadImagesView(app: app)
+            case .imageTap:
+                VStack(spacing: 8) {
+                    ImageFlashTapView(app: app)
+                    if app.showLogs { LogsPanelView(logger: app.logger) }
+                }
+            case .imageEdit:
+                VStack(spacing: 8) {
+                    ImageFlashEditView(app: app)
+                    if app.showLogs { LogsPanelView(logger: app.logger) }
+                }
+            case .imageExport:
+                VStack(spacing: 8) {
+                    ImageFlashExportView(app: app)
+                    if app.showLogs { LogsPanelView(logger: app.logger) }
                 }
             }
         }
