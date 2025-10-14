@@ -42,20 +42,31 @@ struct ImageFlashTapView: View {
 
             HStack(spacing: 12) {
                 Button(audio.isPlaying ? "Pause" : "Play") {
-                    do {
-                        try audio.toggle()
-                        if audio.isPlaying == false {
-                            // If toggle failed to start, try reloading the file
-                            if let data = app.project.audioPathBookmark, let url = BookmarkService.resolveBookmark(data) {
-                                do { try audio.loadFile(url: url) } catch { }
+                    Task { @MainActor in
+                        do {
+                            if audio.isPlaying {
+                                audio.pause()
+                            } else {
+                                if audio.duration <= 0, let data = app.project.audioPathBookmark, let url = BookmarkService.resolveBookmark(data) {
+                                    try? audio.loadFile(url: url)
+                                    app.setAudioDuration(seconds: audio.duration)
+                                }
+                                try? audio.prepareEngineIfNeeded()
+                                try audio.play()
                             }
                         }
-                    } catch { }
+                    }
                 }
                 Button("Restart Take (R)") {
-                    audio.resetToStart()
-                    app.project.imageTapTimestamps.removeAll()
-                    currentIndex = 0
+                    Task { @MainActor in
+                        audio.resetToStart()
+                        app.project.imageTapTimestamps.removeAll()
+                        currentIndex = 0
+                        // If currently playing, restart from 0 immediately
+                        if audio.isPlaying {
+                            try? audio.play(from: 0)
+                        }
+                    }
                 }
                 Spacer()
                 Button("Continue to Edit") {
