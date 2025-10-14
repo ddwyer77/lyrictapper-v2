@@ -85,7 +85,7 @@ struct ImageFlashTapView: View {
                 if let cg = currentImage {
                     GeometryReader { geo in
                         let canvasW: CGFloat = geo.size.width
-                        let canvasH: CGFloat = min(geo.size.height, canvasW * (16.0/9.0))
+                        let canvasH: CGFloat = geo.size.height
                         let scale = canvasW / CGFloat(cg.width)
                         let destH = CGFloat(cg.height) * scale
                         let y = (canvasH - destH) / 2.0
@@ -98,8 +98,9 @@ struct ImageFlashTapView: View {
                         .foregroundColor(.secondary)
                 }
             }
-            .frame(height: 480)
+            .frame(width: 220, height: 391)
             .clipped()
+            .allowsHitTesting(false)
 
             if !app.waveform.isEmpty {
                 WaveformScrubView(app: app, audio: audio)
