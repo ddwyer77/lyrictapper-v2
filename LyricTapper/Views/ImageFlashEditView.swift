@@ -4,7 +4,7 @@ import AppKit
 struct ImageFlashEditView: View {
     @ObservedObject var app: AppState
     @State private var nudgeFrames: Int = 0
-    @StateObject private var decodeCache = ImageDecodeCache(targetWidth: 160)
+    private let decodeCache = ImageDecodeCache(targetWidth: 160)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

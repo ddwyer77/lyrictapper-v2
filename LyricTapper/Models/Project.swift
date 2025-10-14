@@ -64,7 +64,7 @@ struct ImageMeta: Codable, Equatable {
 }
 
 struct ImageInterval: Codable, Equatable {
-    let fileID: ImageFileID
+    var fileID: ImageFileID
     var start: Double
     var end: Double
 }

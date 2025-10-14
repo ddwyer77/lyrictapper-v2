@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import CoreGraphics
 
 struct ImageFlashTapView: View {
     @ObservedObject var app: AppState
@@ -58,9 +59,7 @@ struct ImageFlashTapView: View {
                         let scale = canvasW / CGFloat(cg.width)
                         let destH = CGFloat(cg.height) * scale
                         let y = (canvasH - destH) / 2.0
-                        Image(decorative: NSImage(cgImage: cg, size: .zero), scale: 1.0)
-                            .resizable()
-                            .interpolation(.high)
+                        CGContextImageView(cgImage: cg)
                             .frame(width: canvasW, height: destH)
                             .position(x: canvasW / 2.0, y: y + destH / 2.0)
                     }
@@ -100,6 +99,20 @@ struct ImageFlashTapView: View {
             return resolveURL(for: ids[idx])
         }
         decodeCache.preload(urls: lookahead)
+    }
+}
+
+// Simple NSViewRepresentable to draw a CGImage with SwiftUI sizing
+private struct CGContextImageView: NSViewRepresentable {
+    let cgImage: CGImage
+
+    func makeNSView(context: Context) -> NSImageView {
+        let v = NSImageView()
+        v.imageScaling = .scaleAxesIndependently
+        return v
+    }
+    func updateNSView(_ nsView: NSImageView, context: Context) {
+        nsView.image = NSImage(cgImage: cgImage, size: .zero)
     }
 }
 

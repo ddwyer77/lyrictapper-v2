@@ -8,7 +8,7 @@ enum ImageSequenceService {
         var outCatalog: [ImageFileID: ImageMeta] = [:]
         var ordered: [ImageFileID] = []
         guard let root = BookmarkService.resolveBookmark(folderBookmark), root.startAccessingSecurityScopedResource() else {
-            logger.log(.error, "Folder access failed")
+            Logger.logAsync(.error, "Folder access failed")
             return (outCatalog, ordered)
         }
         defer { root.stopAccessingSecurityScopedResource() }
@@ -42,10 +42,10 @@ enum ImageSequenceService {
                 ordered.append(id)
                 acceptedCount += 1
             } catch {
-                logger.log(.warn, "Skip file", context: url.lastPathComponent)
+                Logger.logAsync(.warn, "Skip file", context: url.lastPathComponent)
             }
         }
-        logger.log(.info, "Images discovered", context: "count=\(acceptedCount)")
+        Logger.logAsync(.info, "Images discovered", context: "count=\(acceptedCount)")
         return (outCatalog, ordered)
     }
 
