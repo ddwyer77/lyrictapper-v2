@@ -63,7 +63,8 @@ struct ImageMeta: Codable, Equatable {
     let fastHash: String?
 }
 
-struct ImageInterval: Codable, Equatable {
+struct ImageInterval: Codable, Equatable, Identifiable {
+    var id: String { "\(fileID.urlBookmark.hashValue)-\(String(format: "%.3f", start))-\(String(format: "%.3f", end))" }
     var fileID: ImageFileID
     var start: Double
     var end: Double
