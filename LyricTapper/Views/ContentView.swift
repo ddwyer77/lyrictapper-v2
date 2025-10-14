@@ -10,7 +10,7 @@ struct ContentView: View {
         } detail: {
             switch app.stage {
             case .home:
-                HomeView(app: app)
+                ProjectsLandingView(app: app)
             case .loadAudio:
                 LoadAudioView(app: app)
             case .enterLyrics:
