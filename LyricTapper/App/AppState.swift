@@ -14,6 +14,7 @@ final class AppState: ObservableObject {
     enum Stage: String, Codable, CaseIterable, Identifiable {
         case home
         case dashboard
+        case trimAudio
         case lyricTakes
         // Lyric tool stages
         case loadAudio

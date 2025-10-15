@@ -13,6 +13,8 @@ struct ContentView: View {
                 ProjectsLandingView(app: app)
             case .dashboard:
                 DashboardView(app: app)
+            case .trimAudio:
+                AudioTrimView(app: app)
             case .lyricTakes:
                 LyricTakesView(app: app)
             case .loadAudio:
