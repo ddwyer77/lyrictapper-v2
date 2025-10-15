@@ -154,8 +154,8 @@ struct ExportView: View {
             // Overlay preview: render short alpha movie (1s placeholder in current implementation)
             let take = makeLyricTakeFromV1()
             let temp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true).appendingPathComponent("lyric_overlay_preview_\(UUID().uuidString).mov")
-            OverlayRenderService.exportLyricOverlayMovie(take: take, settings: RenderSettings(fps: app.project.exportSettings.fps, width: app.project.exportSettings.width, height: app.project.exportSettings.height), destinationURL: temp) { result in
-                DispatchQueue.main.async {
+            OverlayRenderService.exportLyricOverlayMovie(take: take, settings: RenderSettings(fps: app.project.exportSettings.fps, width: app.project.exportSettings.width, height: app.project.exportSettings.height), destinationURL: temp, completion: { result in
+                DispatchQueue.main.async(execute: {
                     switch result {
                     case .success(let url):
                         previewStatus = "Overlay preview ready."
@@ -163,8 +163,8 @@ struct ExportView: View {
                     case .failure(let err):
                         previewStatus = "Overlay preview failed: \(err.localizedDescription)"
                     }
-                }
-            }
+                })
+            })
         }
     }
 
@@ -200,8 +200,8 @@ struct ExportView: View {
                 }
             } else {
                 let take = makeLyricTakeFromV1()
-                OverlayRenderService.exportLyricOverlayMovie(take: take, settings: RenderSettings(fps: app.project.exportSettings.fps, width: app.project.exportSettings.width, height: app.project.exportSettings.height), destinationURL: url) { result in
-                    DispatchQueue.main.async {
+                OverlayRenderService.exportLyricOverlayMovie(take: take, settings: RenderSettings(fps: app.project.exportSettings.fps, width: app.project.exportSettings.width, height: app.project.exportSettings.height), destinationURL: url, completion: { result in
+                    DispatchQueue.main.async(execute: {
                         switch result {
                         case .success:
                             previewStatus = "Exported: \(url.lastPathComponent)"
@@ -210,8 +210,8 @@ struct ExportView: View {
                             previewStatus = "Overlay export failed: \(err.localizedDescription)"
                             app.logger.log(.error, "Overlay export failed", context: err.localizedDescription)
                         }
-                    }
-                }
+                    })
+                })
             }
         }
     }
