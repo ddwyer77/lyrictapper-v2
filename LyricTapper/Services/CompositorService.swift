@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import CoreGraphics
 import AppKit
+import CoreText
 
 enum CompositorService {
     // Final export: render images (hard cuts) and overlay lyric text (rerender)
@@ -56,15 +57,12 @@ enum CompositorService {
                 var frameTime = CMTime.zero
                 var frameIndex = 0
 
-                // Font selection for overlay
+                // Font selection for overlay (Core Text for thread-safe draw)
                 let relSize: CGFloat = CGFloat(lyricTake?.fontSize ?? 0.18)
                 let fontSize = max(12.0, relSize * CGFloat(min(settings.width, settings.height)))
-                let nsFont: NSFont = {
-                    if let take = lyricTake {
-                        if let path = take.fontFilePath, let provider = CGDataProvider(url: URL(fileURLWithPath: path) as CFURL), let cgFont = CGFont(provider), let f = NSFont(name: cgFont.postScriptName as String? ?? "", size: fontSize) { return f }
-                        if let family = take.fontFamily, let f = NSFont(name: family, size: fontSize) { return f }
-                    }
-                    return NSFont.systemFont(ofSize: fontSize)
+                let ctFont: CTFont = {
+                    let family = lyricTake?.fontFamily ?? "Helvetica Neue"
+                    return CTFontCreateWithName(family as CFString, fontSize, nil)
                 }()
 
                 while frameIndex < totalFrames {
@@ -104,19 +102,26 @@ enum CompositorService {
                                 let tLyric = tSec + Double(lyricOffsetMs) / 1000.0
                                 if let w = take.timings.first(where: { tLyric >= $0.start && tLyric < $0.end }) {
                                     let text = w.word
-                                    let paragraph = NSMutableParagraphStyle(); paragraph.alignment = .center
-                                    // White text with thin black stroke for readability
+                                    let white = CGColor(gray: 1.0, alpha: 1.0)
+                                    let black = CGColor(gray: 0.0, alpha: 1.0)
                                     let attrs: [NSAttributedString.Key: Any] = [
-                                        .font: nsFont,
-                                        .foregroundColor: NSColor.white,
-                                        .strokeColor: NSColor.black,
-                                        .strokeWidth: -2.0,
-                                        .paragraphStyle: paragraph
+                                        NSAttributedString.Key(kCTFontAttributeName as String): ctFont,
+                                        NSAttributedString.Key(kCTForegroundColorAttributeName as String): white,
+                                        NSAttributedString.Key(kCTStrokeColorAttributeName as String): black,
+                                        NSAttributedString.Key(kCTStrokeWidthAttributeName as String): -2.0
                                     ]
                                     let attr = NSAttributedString(string: text, attributes: attrs)
-                                    let boxHeight = nsFont.pointSize * 1.2
-                                    let box = CGRect(x: 0, y: (CGFloat(settings.height) - boxHeight) / 2.0, width: CGFloat(settings.width), height: boxHeight)
-                                    attr.draw(in: box)
+                                    let line = CTLineCreateWithAttributedString(attr as CFAttributedString)
+                                    let lineWidth = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+                                    let x = (CGFloat(settings.width) - lineWidth) / 2.0
+                                    // Flip coordinates for Core Text
+                                    ctx?.saveGState()
+                                    ctx?.translateBy(x: 0, y: CGFloat(settings.height))
+                                    ctx?.scaleBy(x: 1, y: -1)
+                                    let baselineY = (CGFloat(settings.height) / 2.0) + (fontSize * 0.35)
+                                    ctx?.textPosition = CGPoint(x: x, y: baselineY)
+                                    CTLineDraw(line, ctx!)
+                                    ctx?.restoreGState()
                                 }
                             }
                         }
