@@ -9,6 +9,7 @@ struct ExportView: View {
 
     @State private var previewStatus: String = ""
     @State private var sizePreset: SizePreset = .square
+    @State private var exportPreset: ExportPreset = .standalone
     @State private var showFontPicker: Bool = false
     @State private var previewPlayer: AVPlayer? = nil
 
@@ -36,6 +37,18 @@ struct ExportView: View {
         }
     }
 
+    enum ExportPreset: String, CaseIterable, Identifiable {
+        case standalone
+        case overlayAlpha
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .standalone: return "Standalone (white, H.264)"
+            case .overlayAlpha: return "Overlay (alpha)"
+            }
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Preview and Export")
@@ -49,6 +62,13 @@ struct ExportView: View {
                 }
                 .pickerStyle(.segmented)
 
+                Picker("Preset", selection: $exportPreset) {
+                    ForEach(ExportPreset.allCases) { p in
+                        Text(p.label).tag(p)
+                    }
+                }
+                .pickerStyle(.segmented)
+
                 Menu("Font") {
                     Button("Arial Narrow") { app.project.exportSettings.fontFamily = "Arial Narrow" }
                     Button("System Default") { app.project.exportSettings.fontFamily = nil }
@@ -58,7 +78,7 @@ struct ExportView: View {
                 }
 
                 Button("Render Preview") { renderPreview() }
-                Button("Export MP4") { exportFinal() }
+                Button("Export Video") { exportFinal() }
                 Spacer()
                 Text(previewStatus).foregroundColor(.secondary)
             }
@@ -116,16 +136,33 @@ struct ExportView: View {
         }
         app.logger.log(.info, "Resolve audio URL for export", context: audioURL.path)
         applyPresetToSettings()
-        ExportService.renderPreviewFile(audioURL: audioURL, timings: app.project.timings, settings: app.project.exportSettings) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let url):
-                    previewStatus = "Preview composition created."
-                    app.logger.log(.info, "Preview file ready", context: url.lastPathComponent)
-                    previewPlayer = AVPlayer(url: url)
-                case .failure(let error):
-                    previewStatus = "Preview failed: \(error.localizedDescription)"
-                    app.logger.log(.error, "Preview failed", context: error.localizedDescription)
+        if exportPreset == .standalone {
+            ExportService.renderPreviewFile(audioURL: audioURL, timings: app.project.timings, settings: app.project.exportSettings) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let url):
+                        previewStatus = "Preview composition created."
+                        app.logger.log(.info, "Preview file ready", context: url.lastPathComponent)
+                        previewPlayer = AVPlayer(url: url)
+                    case .failure(let error):
+                        previewStatus = "Preview failed: \(error.localizedDescription)"
+                        app.logger.log(.error, "Preview failed", context: error.localizedDescription)
+                    }
+                }
+            }
+        } else {
+            // Overlay preview: render short alpha movie (1s placeholder in current implementation)
+            let take = makeLyricTakeFromV1()
+            let temp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true).appendingPathComponent("lyric_overlay_preview_\(UUID().uuidString).mov")
+            OverlayRenderService.exportLyricOverlayMovie(take: take, settings: RenderSettings(fps: app.project.exportSettings.fps, width: app.project.exportSettings.width, height: app.project.exportSettings.height), destinationURL: temp) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let url):
+                        previewStatus = "Overlay preview ready."
+                        previewPlayer = AVPlayer(url: url)
+                    case .failure(let err):
+                        previewStatus = "Overlay preview failed: \(err.localizedDescription)"
+                    }
                 }
             }
         }
@@ -137,21 +174,42 @@ struct ExportView: View {
             return
         }
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.mpeg4Movie]
-        panel.nameFieldStringValue = "lyric_tapper.mp4"
+        if exportPreset == .standalone {
+            panel.allowedContentTypes = [.mpeg4Movie]
+            panel.nameFieldStringValue = "lyric_tapper.mp4"
+        } else {
+            panel.allowedContentTypes = [UTType(filenameExtension: "mov")!]
+            panel.nameFieldStringValue = "lyric_overlay.mov"
+        }
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
             previewStatus = "Exporting…"
             applyPresetToSettings()
-            ExportService.export(audioURL: audioURL, timings: app.project.timings, settings: app.project.exportSettings, destinationURL: url) { result in
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success:
-                        previewStatus = "Exported: \(url.lastPathComponent)"
-                        app.logger.log(.info, "Export succeeded", context: url.lastPathComponent)
-                    case .failure(let error):
-                        previewStatus = "Export failed: \(error.localizedDescription)"
-                        app.logger.log(.error, "Export failed", context: error.localizedDescription)
+            if exportPreset == .standalone {
+                ExportService.export(audioURL: audioURL, timings: app.project.timings, settings: app.project.exportSettings, destinationURL: url) { result in
+                    DispatchQueue.main.async {
+                        switch result {
+                        case .success:
+                            previewStatus = "Exported: \(url.lastPathComponent)"
+                            app.logger.log(.info, "Export succeeded", context: url.lastPathComponent)
+                        case .failure(let error):
+                            previewStatus = "Export failed: \(error.localizedDescription)"
+                            app.logger.log(.error, "Export failed", context: error.localizedDescription)
+                        }
+                    }
+                }
+            } else {
+                let take = makeLyricTakeFromV1()
+                OverlayRenderService.exportLyricOverlayMovie(take: take, settings: RenderSettings(fps: app.project.exportSettings.fps, width: app.project.exportSettings.width, height: app.project.exportSettings.height), destinationURL: url) { result in
+                    DispatchQueue.main.async {
+                        switch result {
+                        case .success:
+                            previewStatus = "Exported: \(url.lastPathComponent)"
+                            app.logger.log(.info, "Overlay export succeeded", context: url.lastPathComponent)
+                        case .failure(let err):
+                            previewStatus = "Overlay export failed: \(err.localizedDescription)"
+                            app.logger.log(.error, "Overlay export failed", context: err.localizedDescription)
+                        }
                     }
                 }
             }
@@ -183,6 +241,21 @@ struct ExportView: View {
             app.project.exportSettings.fontFamily = nil
             app.logger.log(.info, "Custom font imported", context: url.lastPathComponent)
         }
+    }
+
+    private func makeLyricTakeFromV1() -> TrackLyricTake {
+        TrackLyricTake(
+            id: UUID().uuidString,
+            name: "Lyric-Overlay",
+            tapMode: (app.project.tapMode == .perSyllable ? .syllable : .word),
+            tapTimestamps: app.project.taps.map { $0.t },
+            timings: app.project.timings,
+            fontFamily: app.project.exportSettings.fontFamily,
+            fontFilePath: app.project.exportSettings.fontFilePath,
+            fontSize: app.project.exportSettings.fontSizePct ?? 0.18,
+            backgroundMode: .transparent,
+            previewPath: nil
+        )
     }
 }
 
