@@ -98,9 +98,11 @@ enum CompositorService {
                             }
 
                             // Overlay lyric text
-                            if let take = lyricTake {
+                            if let take = lyricTake, !take.timings.isEmpty {
                                 let tLyric = tSec + Double(lyricOffsetMs) / 1000.0
-                                if let w = take.timings.first(where: { tLyric >= $0.start && tLyric < $0.end }) {
+                                // Find last timing <= tLyric to ensure coverage at boundaries
+                                let w = take.timings.last(where: { $0.start <= tLyric && tLyric < $0.end })
+                                if let w = w {
                                     let text = w.word
                                     let white = CGColor(gray: 1.0, alpha: 1.0)
                                     let black = CGColor(gray: 0.0, alpha: 1.0)

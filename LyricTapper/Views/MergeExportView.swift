@@ -30,7 +30,11 @@ struct MergeExportView: View {
         // Offsets not yet applied in compositor; future step will shift intervals/timings non-destructively
         let settings = RenderSettings(fps: 30, width: 1080, height: 1920)
         let intervals = app.project.imageIntervals
-        let lyricTake: TrackLyricTake? = app.projectV2.tracks.lyric.takes.first(where: { $0.id == app.projectV2.tracks.lyric.currentTakeId })
+        var lyricTake: TrackLyricTake? = app.projectV2.tracks.lyric.takes.first(where: { $0.id == app.projectV2.tracks.lyric.currentTakeId })
+        // Fallback: if no current lyric take (or empty timings), build from v1 state
+        if lyricTake == nil || (lyricTake?.timings.isEmpty == true) {
+            lyricTake = makeLyricTakeFromV1()
+        }
         status = "Exporting…"
         CompositorService.exportFinal(audioURL: audioURL, imageIntervals: intervals, settings: settings, lyricTake: lyricTake, lyricOffsetMs: lyricOffsetMs, imageOffsetMs: imageOffsetMs) { result in
             DispatchQueue.main.async {
@@ -43,6 +47,21 @@ struct MergeExportView: View {
                 }
             }
         }
+    }
+
+    private func makeLyricTakeFromV1() -> TrackLyricTake {
+        TrackLyricTake(
+            id: UUID().uuidString,
+            name: "Lyric-Overlay",
+            tapMode: (app.project.tapMode == .perSyllable ? .syllable : .word),
+            tapTimestamps: app.project.taps.map { $0.t },
+            timings: app.project.timings,
+            fontFamily: app.project.exportSettings.fontFamily,
+            fontFilePath: app.project.exportSettings.fontFilePath,
+            fontSize: app.project.exportSettings.fontSizePct ?? 0.18,
+            backgroundMode: .transparent,
+            previewPath: nil
+        )
     }
 
     private func resolveAudioURL() -> URL? {
