@@ -70,6 +70,34 @@ struct ProjectsLandingView: View {
             }
         }
         .padding(24)
+        .onAppear {
+            // When returning to landing, restore picked audio and waveform from the current project
+            if pickedAudioURL == nil {
+                if let bm = app.projectV2.audio.bookmark, let url = BookmarkService.resolveBookmark(bm) {
+                    pickedAudioURL = url
+                    durationSec = app.projectV2.audio.duration
+                    if durationSec <= 0 {
+                        let asset = AVAsset(url: url)
+                        durationSec = CMTimeGetSeconds(asset.duration)
+                    }
+                    startTime = 0
+                    endTime = max(0.1, durationSec)
+                    if !app.waveform.isEmpty {
+                        waveformBins = app.waveform
+                    } else {
+                        DispatchQueue.global(qos: .userInitiated).async {
+                            let bins = (try? WaveformService.computeRMSBins(url: url, targetBins: 800)) ?? []
+                            DispatchQueue.main.async {
+                                waveformBins = bins
+                                app.waveform = bins
+                            }
+                        }
+                    }
+                }
+            } else if waveformBins.isEmpty && !app.waveform.isEmpty {
+                waveformBins = app.waveform
+            }
+        }
     }
 
     private func chooseAudio() {
@@ -154,7 +182,10 @@ extension ProjectsLandingView {
         endTime = max(0.1, durationSec)
         DispatchQueue.global(qos: .userInitiated).async {
             let bins = (try? WaveformService.computeRMSBins(url: url, targetBins: 800)) ?? []
-            DispatchQueue.main.async { waveformBins = bins }
+            DispatchQueue.main.async {
+                waveformBins = bins
+                app.waveform = bins
+            }
         }
     }
 
