@@ -37,6 +37,14 @@ This is the SwiftUI scaffolding for a Mac App Store–compliant rebuild of Lyric
 - Timing computation matches the existing Electron logic.
 
 ## Image Flash
+## Projects & Takes (v2)
+
+- New/Open projects from the landing screen.
+- Each project has two tracks (Lyric, Image Flash) and supports multiple takes per track.
+- Takes can be duplicated, deleted, and set as current; current takes power Edit/Export and Merge.
+- Merge & Export combines the Image track (hard cuts, 9:16) with a transparent Lyric overlay (rerender path) and muxes project audio.
+- Lyric Export presets: Standalone (white/H.264) and Overlay (alpha).
+
 
 Create a hard-cut 9:16 video where each tap advances to a new random image from a selected folder.
 
