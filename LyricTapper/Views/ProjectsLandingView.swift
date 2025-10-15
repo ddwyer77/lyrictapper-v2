@@ -50,6 +50,11 @@ struct ProjectsLandingView: View {
                     .frame(minHeight: 120, maxHeight: 220)
                 }
             }
+            HStack(spacing: 12) {
+                Button("Save Project As…") { saveProjectAs() }
+                if let url = app.projectManager.currentURL { Text("Saving to: \(url.lastPathComponent)").foregroundColor(.secondary) }
+                Spacer()
+            }
         }
         .padding(24)
     }
@@ -91,8 +96,11 @@ struct ProjectsLandingView: View {
             guard response == .OK, let url = panel.url else { return }
             do {
                 // Try v2 first
-                _ = try ProjectStore.loadV2(from: url)
+                let p = try ProjectStore.loadV2(from: url)
+                app.projectV2 = p
+                app.projectManager.open(url: url)
                 status = "Opened project (v2): \(url.lastPathComponent)"
+                app.stage = .dashboard
             } catch {
                 // Fallback to v1 legacy
                 if let v1 = try? ProjectStore.loadV1(from: url) {
@@ -107,6 +115,18 @@ struct ProjectsLandingView: View {
                     status = "Open failed: \(error.localizedDescription)"
                 }
             }
+        }
+    }
+
+    private func saveProjectAs() {
+        let panel = NSSavePanel()
+        panel.allowedFileTypes = ["json"]
+        panel.nameFieldStringValue = (app.projectV2.project.title.isEmpty ? "Untitled Project" : app.projectV2.project.title) + ".json"
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            app.projectManager.current = app.projectV2
+            app.projectManager.save(to: url)
+            status = "Saved: \(url.lastPathComponent)"
         }
     }
 }

@@ -5,6 +5,7 @@ final class ProjectManager: ObservableObject {
     @Published var current: ProjectV2? = nil
     @Published var dirty: Bool = false
     @Published var recent: [URL] = []
+    @Published var currentURL: URL? = nil
 
     private var autosaveTimer: Timer?
 
@@ -18,6 +19,7 @@ final class ProjectManager: ObservableObject {
         do {
             let p = try ProjectStore.loadV2(from: url)
             current = p
+            currentURL = url
             addRecent(url)
             dirty = false
             scheduleAutosave()
@@ -32,6 +34,7 @@ final class ProjectManager: ObservableObject {
             try ProjectStore.saveV2(project: p, to: url)
             dirty = false
             addRecent(url)
+            currentURL = url
         } catch {
             Logger.logAsync(.error, "Save failed", context: error.localizedDescription)
         }
@@ -45,8 +48,12 @@ final class ProjectManager: ObservableObject {
         autosaveTimer?.invalidate()
         autosaveTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             guard let self, self.dirty, let p = self.current else { return }
-            let tmp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true).appendingPathComponent("autosave.ltproj.json")
-            try? ProjectStore.saveV2(project: p, to: tmp)
+            if let url = self.currentURL {
+                try? ProjectStore.saveV2(project: p, to: url)
+            } else {
+                let tmp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true).appendingPathComponent("autosave.ltproj.json")
+                try? ProjectStore.saveV2(project: p, to: tmp)
+            }
         }
     }
 
