@@ -169,9 +169,11 @@ extension AppState {
 extension AppState {
     func setCurrentLyricTake(_ id: String?) {
         projectV2.tracks.lyric.currentTakeId = id
+        // autosave hook
     }
     func setCurrentImageTake(_ id: String?) {
         projectV2.tracks.image.currentTakeId = id
+        // autosave hook
     }
 
     func duplicateLyricTake(_ id: String) {

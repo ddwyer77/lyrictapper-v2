@@ -69,7 +69,8 @@ struct ImageFlashTapView: View {
                     }
                 }
                 Spacer()
-                Button("Continue to Edit") {
+                Button("Commit as Take & Continue to Edit") {
+                    app.commitCurrentImageAsTake()
                     app.project.imageIntervals = TimingService.computeImageIntervals(
                         taps: app.project.imageTapTimestamps,
                         audioDuration: app.project.audioDuration,

@@ -92,7 +92,10 @@ struct TapView: View {
 
             HStack {
                 Spacer()
-                Button("Continue to Edit") { app.stage = .edit }
+                Button("Commit as Take & Continue to Edit") {
+                    app.stage = .edit
+                    app.commitCurrentLyricAsTake()
+                }
             }
         }
         .padding()
