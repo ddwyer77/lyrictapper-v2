@@ -114,15 +114,11 @@ enum CompositorService {
                                     ]
                                     let attr = NSAttributedString(string: text, attributes: attrs)
                                     let line = CTLineCreateWithAttributedString(attr as CFAttributedString)
-                                    var ascent: CGFloat = 0
-                                    var descent: CGFloat = 0
-                                    var leading: CGFloat = 0
-                                    let lineWidth = CGFloat(CTLineGetTypographicBounds(line, &ascent, &descent, &leading))
-                                    let x = (CGFloat(settings.width) - lineWidth) / 2.0
-                                    // Draw in current (top-left origin) coordinate system
-                                    let lineHeight = ascent + descent
-                                    let baselineY = ((CGFloat(settings.height) - lineHeight) / 2.0) + ascent
-                                    ctx?.textPosition = CGPoint(x: x, y: baselineY)
+                                    // Center using image bounds (accounts for stroke and actual glyph bounds)
+                                    let bounds = CTLineGetImageBounds(line, ctx!)
+                                    let x = (CGFloat(settings.width) - bounds.width) / 2.0 - bounds.origin.x
+                                    let y = (CGFloat(settings.height) - bounds.height) / 2.0 - bounds.origin.y
+                                    ctx?.textPosition = CGPoint(x: x, y: y)
                                     CTLineDraw(line, ctx!)
                                 }
                             }
