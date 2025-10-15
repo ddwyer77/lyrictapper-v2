@@ -12,7 +12,7 @@ struct ContentView: View {
             case .home:
                 ProjectsLandingView(app: app)
             case .dashboard:
-                DashboardView(app: app)
+                ProjectsLandingView(app: app)
             case .trimAudio:
                 AudioTrimView(app: app)
             case .lyricTakes:
