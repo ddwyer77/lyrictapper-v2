@@ -7,6 +7,10 @@ struct ProjectsLandingView: View {
 
     @State private var status: String = ""
     @State private var pickedAudioURL: URL? = nil
+    @State private var waveformBins: [WaveformBin] = []
+    @State private var startTime: Double = 0
+    @State private var endTime: Double = 0
+    @State private var durationSec: Double = 0
 
     var body: some View {
         VStack(spacing: 24) {
@@ -18,6 +22,26 @@ struct ProjectsLandingView: View {
                 if let url = pickedAudioURL {
                     Text("Audio: \(url.lastPathComponent)")
                         .foregroundColor(.secondary)
+                }
+                if pickedAudioURL != nil {
+                    WaveformView(bins: waveformBins, color: .accentColor)
+                        .frame(height: 120)
+                        .background(Color.black.opacity(0.05))
+                        .cornerRadius(6)
+                    HStack(spacing: 16) {
+                        VStack(alignment: .leading) {
+                            Text(String(format: "Start: %.2fs", startTime))
+                            Slider(value: $startTime, in: 0...max(0, endTime - 0.1), step: 0.01)
+                        }
+                        VStack(alignment: .leading) {
+                            Text(String(format: "End: %.2fs", endTime))
+                            Slider(value: $endTime, in: max(startTime + 0.1, 0)...max(startTime + 0.1, durationSec), step: 0.01)
+                        }
+                        Text(String(format: "Len: %.2fs", max(0, endTime - startTime)))
+                            .foregroundColor(.secondary)
+                        Button("Trim Audio") { trimOnLanding() }
+                            .disabled(pickedAudioURL == nil || (endTime - startTime) < 0.1)
+                    }
                 }
                 HStack(spacing: 12) {
                     Button("Start with Lyric Tool") { startWith(.lyrics) }
@@ -69,6 +93,7 @@ struct ProjectsLandingView: View {
             guard response == .OK, let url = panel.url else { return }
             pickedAudioURL = url
             status = "Picked audio: \(url.lastPathComponent)"
+            prepareFor(url)
         }
     }
 
@@ -77,9 +102,7 @@ struct ProjectsLandingView: View {
         do {
             let bookmark = try BookmarkService.createBookmark(for: url)
             app.setAudioBookmark(bookmark)
-            let asset = AVAsset(url: url)
-            let durationSeconds = CMTimeGetSeconds(asset.duration)
-            app.setAudioDuration(seconds: durationSeconds)
+            app.setAudioDuration(seconds: durationSec)
             app.stage = .dashboard
         } catch {
             status = "Failed: \(error.localizedDescription)"
@@ -131,6 +154,58 @@ struct ProjectsLandingView: View {
             status = "Saved: \(url.lastPathComponent)"
         }
     }
+}
+
+// MARK: - Landing helpers
+extension ProjectsLandingView {
+    private func prepareFor(_ url: URL) {
+        let asset = AVAsset(url: url)
+        durationSec = CMTimeGetSeconds(asset.duration)
+        startTime = 0
+        endTime = max(0.1, durationSec)
+        DispatchQueue.global(qos: .userInitiated).async {
+            let bins = (try? WaveformService.computeRMSBins(url: url, targetBins: 800)) ?? []
+            DispatchQueue.main.async { waveformBins = bins }
+        }
+    }
+
+    private func trimOnLanding() {
+        guard let url = pickedAudioURL else { return }
+        let s = max(0, min(startTime, endTime - 0.1))
+        let e = max(s + 0.1, endTime)
+        let outURL = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true).appendingPathComponent("trim_\(UUID().uuidString).m4a")
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try exportTrimmedAudio(source: url, start: s, end: e, to: outURL)
+                DispatchQueue.main.async {
+                    pickedAudioURL = outURL
+                    status = String(format: "Trimmed to %.2fs", e - s)
+                    prepareFor(outURL)
+                }
+            } catch {
+                DispatchQueue.main.async { status = "Trim failed: \(error.localizedDescription)" }
+            }
+        }
+    }
+}
+
+private func exportTrimmedAudio(source: URL, start: Double, end: Double, to dest: URL) throws {
+    let asset = AVAsset(url: source)
+    guard let track = asset.tracks(withMediaType: .audio).first else { throw ExportServiceError.missingAudio }
+    let composition = AVMutableComposition()
+    let compAudio = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)!
+    let startTime = CMTime(seconds: start, preferredTimescale: 600)
+    let duration = CMTime(seconds: end - start, preferredTimescale: 600)
+    try compAudio.insertTimeRange(CMTimeRange(start: startTime, duration: duration), of: track, at: .zero)
+
+    if FileManager.default.fileExists(atPath: dest.path) { try? FileManager.default.removeItem(at: dest) }
+    guard let exporter = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetAppleM4A) else { throw ExportServiceError.compositionFailed }
+    exporter.outputURL = dest
+    exporter.outputFileType = .m4a
+    let g = DispatchGroup(); var err: Error?; g.enter()
+    exporter.exportAsynchronously { if exporter.status != .completed { err = exporter.error ?? ExportServiceError.compositionFailed }; g.leave() }
+    g.wait()
+    if let e = err { throw e }
 }
 
 
