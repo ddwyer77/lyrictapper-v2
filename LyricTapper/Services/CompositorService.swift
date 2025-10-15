@@ -57,7 +57,8 @@ enum CompositorService {
                 var frameIndex = 0
 
                 // Font selection for overlay
-                let fontSize = CGFloat(0.18) * CGFloat(min(settings.width, settings.height))
+                let relSize: CGFloat = CGFloat(lyricTake?.fontSize ?? 0.18)
+                let fontSize = max(12.0, relSize * CGFloat(min(settings.width, settings.height)))
                 let nsFont: NSFont = {
                     if let take = lyricTake {
                         if let path = take.fontFilePath, let provider = CGDataProvider(url: URL(fileURLWithPath: path) as CFURL), let cgFont = CGFont(provider), let f = NSFont(name: cgFont.postScriptName as String? ?? "", size: fontSize) { return f }
@@ -104,7 +105,14 @@ enum CompositorService {
                                 if let w = take.timings.first(where: { tLyric >= $0.start && tLyric < $0.end }) {
                                     let text = w.word
                                     let paragraph = NSMutableParagraphStyle(); paragraph.alignment = .center
-                                    let attrs: [NSAttributedString.Key: Any] = [ .font: nsFont, .foregroundColor: NSColor.white, .paragraphStyle: paragraph ]
+                                    // White text with thin black stroke for readability
+                                    let attrs: [NSAttributedString.Key: Any] = [
+                                        .font: nsFont,
+                                        .foregroundColor: NSColor.white,
+                                        .strokeColor: NSColor.black,
+                                        .strokeWidth: -2.0,
+                                        .paragraphStyle: paragraph
+                                    ]
                                     let attr = NSAttributedString(string: text, attributes: attrs)
                                     let boxHeight = nsFont.pointSize * 1.2
                                     let box = CGRect(x: 0, y: (CGFloat(settings.height) - boxHeight) / 2.0, width: CGFloat(settings.width), height: boxHeight)

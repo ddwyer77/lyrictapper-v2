@@ -66,7 +66,14 @@ struct ContentView: View {
                 }
             }
         }
-        .toolbar { ToolbarItem(placement: .automatic) { Toggle(isOn: $app.showLogs) { Text("Logs") } } }
+        .toolbar {
+            ToolbarItem(placement: .automatic) { Toggle(isOn: $app.showLogs) { Text("Logs") } }
+            ToolbarItem(placement: .status) {
+                HStack(spacing: 8) {
+                    if app.projectManager.dirty { Text("• Unsaved").foregroundColor(.secondary) } else { Text("Saved •").foregroundColor(.secondary) }
+                }
+            }
+        }
     }
 }
 
