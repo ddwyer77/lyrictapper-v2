@@ -18,8 +18,10 @@ struct LoadAudioView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Button("Continue") { app.stage = .enterLyrics }
-                    .disabled(app.project.audioDuration <= 0)
+                Button(app.project.audioDuration > 0 ? "Continue" : "Skip") {
+                    app.stage = .enterLyrics
+                }
+                .disabled(app.project.audioDuration <= 0 && app.project.audioPathBookmark == nil)
             }
 
             if !status.isEmpty {

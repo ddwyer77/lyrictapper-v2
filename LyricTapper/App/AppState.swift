@@ -65,9 +65,15 @@ final class AppState: ObservableObject {
         activeTool = tool
         switch tool {
         case .lyrics:
-            stage = .loadAudio
+            // If audio already chosen, skip picker
+            if project.audioPathBookmark != nil && project.audioDuration > 0 {
+                stage = .enterLyrics
+            } else {
+                stage = .loadAudio
+            }
             project.mode = .lyrics
         case .imageFlash:
+            // Reuse chosen audio for image flash; skip audio picker entirely
             stage = .loadImages
             project.mode = .imageFlash
         }

@@ -99,6 +99,8 @@ struct ProjectsLandingView: View {
                 let p = try ProjectStore.loadV2(from: url)
                 app.projectV2 = p
                 app.projectManager.open(url: url)
+                // Commit audio bookmark into v1 shim so legacy views use it automatically
+                if let data = p.audio.bookmark { app.setAudioBookmark(data) }
                 status = "Opened project (v2): \(url.lastPathComponent)"
                 app.stage = .dashboard
             } catch {
