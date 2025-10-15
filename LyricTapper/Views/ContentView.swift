@@ -13,6 +13,8 @@ struct ContentView: View {
                 ProjectsLandingView(app: app)
             case .dashboard:
                 DashboardView(app: app)
+            case .lyricTakes:
+                LyricTakesView(app: app)
             case .loadAudio:
                 LoadAudioView(app: app)
             case .enterLyrics:
@@ -38,6 +40,8 @@ struct ContentView: View {
                         LogsPanelView(logger: app.logger)
                     }
                 }
+            case .imageTakes:
+                ImageTakesView(app: app)
             case .loadImages:
                 LoadImagesView(app: app)
             case .imageTap:

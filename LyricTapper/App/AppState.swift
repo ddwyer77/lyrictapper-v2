@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import AVFoundation
+import UniformTypeIdentifiers
 
 enum ToolKind: String, Codable, CaseIterable, Identifiable {
     case lyrics
@@ -13,6 +14,7 @@ final class AppState: ObservableObject {
     enum Stage: String, Codable, CaseIterable, Identifiable {
         case home
         case dashboard
+        case lyricTakes
         // Lyric tool stages
         case loadAudio
         case enterLyrics
@@ -20,6 +22,7 @@ final class AppState: ObservableObject {
         case edit
         case export
         // Image Flash stages
+        case imageTakes
         case loadImages
         case imageTap
         case imageEdit
@@ -31,6 +34,7 @@ final class AppState: ObservableObject {
     @Published var stage: Stage = .home
     @Published var activeTool: ToolKind = .lyrics
     @Published var project: Project
+    @Published var projectV2: ProjectV2 = ProjectV2.newDefault()
     @Published var waveform: [WaveformBin] = []
     @Published var showLogs: Bool = false
     @Published var logger: Logger = .shared
