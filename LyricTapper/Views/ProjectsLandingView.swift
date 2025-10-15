@@ -92,7 +92,7 @@ struct ProjectsLandingView: View {
             let bookmark = try BookmarkService.createBookmark(for: url)
             app.setAudioBookmark(bookmark)
             app.setAudioDuration(seconds: durationSec)
-            app.stage = .dashboard
+            app.switchTool(tool)
         } catch {
             status = "Failed: \(error.localizedDescription)"
         }
