@@ -27,6 +27,9 @@ struct SidebarView: View {
                     Label("Export", systemImage: "square.and.arrow.up").tag(AppState.Stage.imageExport)
                 }
             }
+            Section("Merge") {
+                Label("Merge & Export", systemImage: "square.stack.3d.up").tag(AppState.Stage.mergeExport)
+            }
         }
         .listStyle(SidebarListStyle())
     }

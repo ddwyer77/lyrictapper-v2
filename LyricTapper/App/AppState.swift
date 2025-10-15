@@ -24,6 +24,7 @@ final class AppState: ObservableObject {
         case imageTap
         case imageEdit
         case imageExport
+        case mergeExport
         var id: String { rawValue }
     }
 

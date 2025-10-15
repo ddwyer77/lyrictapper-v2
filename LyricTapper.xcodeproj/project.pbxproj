@@ -44,6 +44,8 @@ ABF2F0060000000000000001 /* LyricTapper/Views/ImageFlashEditView.swift in Source
 ABF2F0070000000000000001 /* LyricTapper/Views/ImageFlashExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABF1F0070000000000000001 /* LyricTapper/Views/ImageFlashExportView.swift */; };
 AA00F1010000000000000001 /* LyricTapper/Models/ProjectV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F0010000000000000001 /* LyricTapper/Models/ProjectV2.swift */; };
 AA00F1020000000000000001 /* LyricTapper/Services/ProjectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F0020000000000000001 /* LyricTapper/Services/ProjectManager.swift */; };
+AA00F1050000000000000001 /* LyricTapper/Views/DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00011D0000000000000001 /* LyricTapper/Views/DashboardView.swift */; };
+AA00F1060000000000000001 /* LyricTapper/Views/MergeExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00011D0000000000000001 /* LyricTapper/Views/MergeExportView.swift */; };
 AA00F1040000000000000001 /* LyricTapper/Views/ProjectsLandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F0030000000000000001 /* LyricTapper/Views/ProjectsLandingView.swift */; };
 /* End PBXBuildFile section */
 
@@ -239,6 +241,7 @@ AA00011D0000000000000001 /* LyricTapper/Views/DashboardView.swift */ = {isa = PB
                 ABF1F0060000000000000001 /* LyricTapper/Views/ImageFlashEditView.swift */,
                 ABF1F0070000000000000001 /* LyricTapper/Views/ImageFlashExportView.swift */,
 				AA00F0030000000000000001 /* LyricTapper/Views/ProjectsLandingView.swift */,
+				AA00011D0000000000000001 /* LyricTapper/Views/MergeExportView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -435,7 +438,8 @@ AA00011D0000000000000001 /* LyricTapper/Views/DashboardView.swift */ = {isa = PB
                 AA00F1040000000000000001 /* LyricTapper/Views/ProjectsLandingView.swift in Sources */,
 				AA00F1010000000000000001 /* LyricTapper/Models/ProjectV2.swift in Sources */,
 				AA00F1020000000000000001 /* LyricTapper/Services/ProjectManager.swift in Sources */,
-                AA00011D0000000000000001 /* LyricTapper/Views/DashboardView.swift in Sources */,
+                AA00F1050000000000000001 /* LyricTapper/Views/DashboardView.swift in Sources */,
+                AA00F1060000000000000001 /* LyricTapper/Views/MergeExportView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

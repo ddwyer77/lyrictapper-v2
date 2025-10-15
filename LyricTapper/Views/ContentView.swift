@@ -55,6 +55,11 @@ struct ContentView: View {
                     ImageFlashExportView(app: app)
                     if app.showLogs { LogsPanelView(logger: app.logger) }
                 }
+            case .mergeExport:
+                VStack(spacing: 8) {
+                    MergeExportView(app: app)
+                    if app.showLogs { LogsPanelView(logger: app.logger) }
+                }
             }
         }
         .toolbar { ToolbarItem(placement: .automatic) { Toggle(isOn: $app.showLogs) { Text("Logs") } } }
