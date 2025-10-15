@@ -9,7 +9,9 @@ struct ImageFlashTapView: View {
     @State private var decodeCache = ImageDecodeCache()
 
     private func resolveURL(for id: ImageFileID) -> URL? {
-        BookmarkService.resolveBookmark(id.urlBookmark)
+        guard let url = BookmarkService.resolveBookmark(id.urlBookmark) else { return nil }
+        _ = url.startAccessingSecurityScopedResource()
+        return url
     }
 
     private var currentImage: CGImage? {
@@ -121,6 +123,16 @@ struct ImageFlashTapView: View {
                     try audio.loadFile(url: url)
                     app.setAudioDuration(seconds: audio.duration)
                     app.computeWaveformIfPossible()
+                    // Ensure we have an initial image order (fallback from v2 take if needed)
+                    if app.project.imageFileIDs.isEmpty,
+                       let id = app.projectV2.tracks.image.currentTakeId,
+                       let take = app.projectV2.tracks.image.takes.first(where: { $0.id == id }),
+                       !take.chosenOrder.isEmpty {
+                        app.project.imageFileIDs = take.chosenOrder
+                    }
+                    currentIndex = 0
+                    // Decode current image immediately so first frame is visible
+                    _ = currentImage
                     preloadLookahead()
                 } catch { }
             }
