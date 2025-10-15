@@ -62,6 +62,16 @@ struct LoadImagesView: View {
             do {
                 let bookmark = try BookmarkService.createBookmark(for: url)
                 app.project.imageFolderBookmark = bookmark
+                // Save to v2 current image take (create if needed)
+                if app.projectV2.tracks.image.takes.isEmpty {
+                    let t = TrackImageTake(id: UUID().uuidString, name: "Image-Take-001", imageFolderBookmark: bookmark, includeSubfolders: app.project.includeSubfolders, skipDuplicateImages: app.project.skipDuplicateImages, imageCatalog: [:], shuffleSeed: 0, chosenOrder: [], tapTimestamps: [], intervals: [], previewPath: nil)
+                    app.projectV2.tracks.image.takes = [t]
+                    app.projectV2.tracks.image.currentTakeId = t.id
+                } else if let id = app.projectV2.tracks.image.currentTakeId, let idx = app.projectV2.tracks.image.takes.firstIndex(where: { $0.id == id }) {
+                    app.projectV2.tracks.image.takes[idx].imageFolderBookmark = bookmark
+                    app.projectV2.tracks.image.takes[idx].includeSubfolders = app.project.includeSubfolders
+                    app.projectV2.tracks.image.takes[idx].skipDuplicateImages = app.project.skipDuplicateImages
+                }
                 let result = ImageSequenceService.buildCatalog(folderBookmark: bookmark, includeSubfolders: app.project.includeSubfolders, skipDuplicates: app.project.skipDuplicateImages, logger: app.logger)
                 app.project.imageCatalog = result.catalog
                 // Seed and order
@@ -70,6 +80,13 @@ struct LoadImagesView: View {
                 let keys = Array(result.catalog.keys)
                 app.project.imageFileIDs = ImageSequenceService.shuffleBagOrder(items: keys, seed: seed)
                 status = "Folder selected: \(url.lastPathComponent). Images: \(result.catalog.count)"
+                // Persist catalog and order
+                if let id = app.projectV2.tracks.image.currentTakeId, let idx = app.projectV2.tracks.image.takes.firstIndex(where: { $0.id == id }) {
+                    app.projectV2.tracks.image.takes[idx].imageCatalog = result.catalog
+                    let seed = app.project.shuffleSeed ?? 0
+                    app.projectV2.tracks.image.takes[idx].shuffleSeed = seed
+                    app.projectV2.tracks.image.takes[idx].chosenOrder = app.project.imageFileIDs
+                }
             } catch {
                 status = "Failed: \(error.localizedDescription)"
             }

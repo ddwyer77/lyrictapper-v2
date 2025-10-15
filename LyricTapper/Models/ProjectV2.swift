@@ -11,6 +11,8 @@ struct ProjectV2: Codable, Equatable {
     var tracks: ProjectTracks
     var merge: MergeSettings
     var settings: RenderSettings
+    // Optional to remain backward compatible with earlier v2 saves
+    var lyricsRaw: String?
 }
 
 struct ProjectMeta: Codable, Equatable {
@@ -99,7 +101,7 @@ extension ProjectV2 {
         let tracks = ProjectTracks(lyric: lyric, image: image)
         let merge = MergeSettings(overlaySource: .rerender, lyricOffsetMs: 0, imageOffsetMs: 0, exportPreset: .Web_H264)
         let settings = RenderSettings(fps: 30, width: 1080, height: 1920)
-        return ProjectV2(project: meta, audio: audio, tracks: tracks, merge: merge, settings: settings)
+        return ProjectV2(project: meta, audio: audio, tracks: tracks, merge: merge, settings: settings, lyricsRaw: "")
     }
 }
 

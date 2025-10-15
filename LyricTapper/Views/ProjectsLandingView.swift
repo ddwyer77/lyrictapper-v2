@@ -170,6 +170,12 @@ extension ProjectsLandingView {
                     pickedAudioURL = outURL
                     status = String(format: "Trimmed to %.2fs", e - s)
                     prepareFor(outURL)
+                    // Persist to v2 immediately so Save works without starting a tool
+                    do {
+                        let bm = try BookmarkService.createBookmark(for: outURL)
+                        app.projectV2.audio.bookmark = bm
+                        app.projectV2.audio.duration = e - s
+                    } catch { }
                 }
             } catch {
                 DispatchQueue.main.async { status = "Trim failed: \(error.localizedDescription)" }

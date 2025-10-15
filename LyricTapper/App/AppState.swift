@@ -85,6 +85,8 @@ final class AppState: ObservableObject {
         project.tokens = Tokenizer.tokenize(lyricsRaw: text)
         project.updatedAt = ISO8601DateFormatter().string(from: Date())
         logger.log(.info, "Lyrics updated", context: "tokens=\(project.tokens.count)")
+        // Persist into v2 as well
+        projectV2.lyricsRaw = text
     }
 
     func applyOffset(ms: Int) {
