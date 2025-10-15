@@ -10,8 +10,21 @@ struct ImageTakesView: View {
                 Button("New Take") { app.stage = .imageTap }
                 Spacer()
             }
-            Text("Use New Take to capture taps; takes management UI will appear here.")
-                .foregroundColor(.secondary)
+            List(selection: Binding(get: { app.projectV2.tracks.image.currentTakeId }, set: { app.setCurrentImageTake($0) })) {
+                ForEach(app.projectV2.tracks.image.takes) { take in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(take.name)
+                            Text("Images: \(take.imageCatalog.count) • Taps: \(take.tapTimestamps.count)")
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Button("Duplicate") { app.duplicateImageTake(take.id) }
+                        Button("Delete") { app.deleteImageTake(take.id) }
+                    }
+                    .tag(Optional(take.id))
+                }
+            }
         }
         .padding(24)
     }

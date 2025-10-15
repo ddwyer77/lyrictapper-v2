@@ -10,8 +10,21 @@ struct LyricTakesView: View {
                 Button("New Take") { app.stage = .tap }
                 Spacer()
             }
-            Text("Use New Take to record taps; set as current from the list below once takes are implemented.")
-                .foregroundColor(.secondary)
+            List(selection: Binding(get: { app.projectV2.tracks.lyric.currentTakeId }, set: { app.setCurrentLyricTake($0) })) {
+                ForEach(app.projectV2.tracks.lyric.takes) { take in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(take.name)
+                            Text("Taps: \(take.tapTimestamps.count)")
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Button("Duplicate") { app.duplicateLyricTake(take.id) }
+                        Button("Delete") { app.deleteLyricTake(take.id) }
+                    }
+                    .tag(Optional(take.id))
+                }
+            }
         }
         .padding(24)
     }

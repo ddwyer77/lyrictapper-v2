@@ -165,4 +165,60 @@ extension AppState {
     }
 }
 
+// MARK: - V2 Takes Management
+extension AppState {
+    func setCurrentLyricTake(_ id: String?) {
+        projectV2.tracks.lyric.currentTakeId = id
+    }
+    func setCurrentImageTake(_ id: String?) {
+        projectV2.tracks.image.currentTakeId = id
+    }
+
+    func duplicateLyricTake(_ id: String) {
+        guard let idx = projectV2.tracks.lyric.takes.firstIndex(where: { $0.id == id }) else { return }
+        var take = projectV2.tracks.lyric.takes[idx]
+        take.id = UUID().uuidString
+        take.name = nextLyricTakeName()
+        projectV2.tracks.lyric.takes.insert(take, at: idx + 1)
+    }
+
+    func deleteLyricTake(_ id: String) {
+        projectV2.tracks.lyric.takes.removeAll { $0.id == id }
+        if projectV2.tracks.lyric.currentTakeId == id { projectV2.tracks.lyric.currentTakeId = projectV2.tracks.lyric.takes.first?.id }
+    }
+
+    func duplicateImageTake(_ id: String) {
+        guard let idx = projectV2.tracks.image.takes.firstIndex(where: { $0.id == id }) else { return }
+        var take = projectV2.tracks.image.takes[idx]
+        take.id = UUID().uuidString
+        take.name = nextImageTakeName()
+        projectV2.tracks.image.takes.insert(take, at: idx + 1)
+    }
+
+    func deleteImageTake(_ id: String) {
+        projectV2.tracks.image.takes.removeAll { $0.id == id }
+        if projectV2.tracks.image.currentTakeId == id { projectV2.tracks.image.currentTakeId = projectV2.tracks.image.takes.first?.id }
+    }
+
+    private func nextLyricTakeName() -> String {
+        let base = "Lyric-Take-"
+        let nums = projectV2.tracks.lyric.takes.compactMap { nameSuffixNumber(base: base, name: $0.name) }
+        let n = (nums.max() ?? 0) + 1
+        return String(format: "%@%03d", base, n)
+    }
+
+    private func nextImageTakeName() -> String {
+        let base = "Image-Take-"
+        let nums = projectV2.tracks.image.takes.compactMap { nameSuffixNumber(base: base, name: $0.name) }
+        let n = (nums.max() ?? 0) + 1
+        return String(format: "%@%03d", base, n)
+    }
+
+    private func nameSuffixNumber(base: String, name: String) -> Int? {
+        guard name.hasPrefix(base) else { return nil }
+        let suffix = name.dropFirst(base.count)
+        return Int(suffix)
+    }
+}
+
 
