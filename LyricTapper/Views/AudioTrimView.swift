@@ -82,7 +82,7 @@ private func exportTrimmedAudio(source: URL, start: Double, end: Double, to dest
     let duration = CMTime(seconds: end - start, preferredTimescale: 600)
     try compAudio.insertTimeRange(CMTimeRange(start: startTime, duration: duration), of: track, at: .zero)
 
-    if FileManager.default.fileExists(atPath: dest.path) { try? FileManager.default.removeItem(at: dest.path) }
+    if FileManager.default.fileExists(atPath: dest.path) { try? FileManager.default.removeItem(at: dest) }
     guard let exporter = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetAppleM4A) else { throw ExportServiceError.compositionFailed }
     exporter.outputURL = dest
     exporter.outputFileType = .m4a
