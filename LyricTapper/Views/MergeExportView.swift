@@ -30,8 +30,9 @@ struct MergeExportView: View {
         // Offsets not yet applied in compositor; future step will shift intervals/timings non-destructively
         let settings = RenderSettings(fps: 30, width: 1080, height: 1920)
         let intervals = app.project.imageIntervals
+        let lyricTake: TrackLyricTake? = app.projectV2.tracks.lyric.takes.first(where: { $0.id == app.projectV2.tracks.lyric.currentTakeId })
         status = "Exporting…"
-        CompositorService.exportFinal(audioURL: audioURL, imageIntervals: intervals, settings: settings) { result in
+        CompositorService.exportFinal(audioURL: audioURL, imageIntervals: intervals, settings: settings, lyricTake: lyricTake, lyricOffsetMs: lyricOffsetMs, imageOffsetMs: imageOffsetMs) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let url):
