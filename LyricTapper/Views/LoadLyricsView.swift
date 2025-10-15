@@ -24,7 +24,15 @@ struct LoadLyricsView: View {
             }
         }
         .padding()
-        .onAppear { lyricsText = app.project.lyricsRaw }
+        .onAppear {
+            if let v2 = app.projectV2.lyricsRaw, !v2.isEmpty {
+                lyricsText = v2
+                app.project.lyricsRaw = v2
+                app.project.tokens = Tokenizer.tokenize(lyricsRaw: v2)
+            } else {
+                lyricsText = app.project.lyricsRaw
+            }
+        }
     }
 }
 
