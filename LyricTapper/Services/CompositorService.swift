@@ -114,16 +114,16 @@ enum CompositorService {
                                     ]
                                     let attr = NSAttributedString(string: text, attributes: attrs)
                                     let line = CTLineCreateWithAttributedString(attr as CFAttributedString)
-                                    let lineWidth = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+                                    var ascent: CGFloat = 0
+                                    var descent: CGFloat = 0
+                                    var leading: CGFloat = 0
+                                    let lineWidth = CGFloat(CTLineGetTypographicBounds(line, &ascent, &descent, &leading))
                                     let x = (CGFloat(settings.width) - lineWidth) / 2.0
-                                    // Flip coordinates for Core Text
-                                    ctx?.saveGState()
-                                    ctx?.translateBy(x: 0, y: CGFloat(settings.height))
-                                    ctx?.scaleBy(x: 1, y: -1)
-                                    let baselineY = (CGFloat(settings.height) / 2.0) + (fontSize * 0.35)
+                                    // Draw in current (top-left origin) coordinate system
+                                    let lineHeight = ascent + descent
+                                    let baselineY = ((CGFloat(settings.height) - lineHeight) / 2.0) + ascent
                                     ctx?.textPosition = CGPoint(x: x, y: baselineY)
                                     CTLineDraw(line, ctx!)
-                                    ctx?.restoreGState()
                                 }
                             }
                         }
