@@ -32,8 +32,8 @@ struct MergeExportView: View {
         let intervals = app.project.imageIntervals
         let lyricTake: TrackLyricTake? = app.projectV2.tracks.lyric.takes.first(where: { $0.id == app.projectV2.tracks.lyric.currentTakeId })
         status = "Exporting…"
-        CompositorService.exportFinal(audioURL: audioURL, imageIntervals: intervals, settings: settings, lyricTake: lyricTake, lyricOffsetMs: lyricOffsetMs, imageOffsetMs: imageOffsetMs, completion: { result in
-            DispatchQueue.main.async(execute: {
+        CompositorService.exportFinal(audioURL: audioURL, imageIntervals: intervals, settings: settings, lyricTake: lyricTake, lyricOffsetMs: lyricOffsetMs, imageOffsetMs: imageOffsetMs) { result in
+            DispatchQueue.main.async {
                 switch result {
                 case .success(let url):
                     status = "Exported: \(url.lastPathComponent)"
@@ -41,8 +41,8 @@ struct MergeExportView: View {
                 case .failure(let err):
                     status = "Export failed: \(err.localizedDescription)"
                 }
-            })
-        })
+            }
+        }
     }
 
     private func resolveAudioURL() -> URL? {
