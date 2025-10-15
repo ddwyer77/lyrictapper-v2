@@ -24,23 +24,12 @@ struct ProjectsLandingView: View {
                         .foregroundColor(.secondary)
                 }
                 if pickedAudioURL != nil {
-                    WaveformView(bins: waveformBins, color: .accentColor)
-                        .frame(height: 120)
-                        .background(Color.black.opacity(0.05))
-                        .cornerRadius(6)
-                    HStack(spacing: 16) {
-                        VStack(alignment: .leading) {
-                            Text(String(format: "Start: %.2fs", startTime))
-                            Slider(value: $startTime, in: 0...max(0, endTime - 0.1), step: 0.01)
-                        }
-                        VStack(alignment: .leading) {
-                            Text(String(format: "End: %.2fs", endTime))
-                            Slider(value: $endTime, in: max(startTime + 0.1, 0)...max(startTime + 0.1, durationSec), step: 0.01)
-                        }
-                        Text(String(format: "Len: %.2fs", max(0, endTime - startTime)))
-                            .foregroundColor(.secondary)
-                        Button("Trim Audio") { trimOnLanding() }
-                            .disabled(pickedAudioURL == nil || (endTime - startTime) < 0.1)
+                    WaveformTrimView(bins: waveformBins, duration: durationSec, start: $startTime, end: $endTime)
+                    HStack(spacing: 12) {
+                        Text(String(format: "Start: %.2fs", startTime)).foregroundColor(.secondary)
+                        Text(String(format: "End: %.2fs", endTime)).foregroundColor(.secondary)
+                        Text(String(format: "Len: %.2fs", max(0, endTime - startTime))).foregroundColor(.secondary)
+                        Button("Trim Audio") { trimOnLanding() }.disabled((endTime - startTime) < 0.1)
                     }
                 }
                 HStack(spacing: 12) {

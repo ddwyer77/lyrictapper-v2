@@ -52,6 +52,7 @@ AA00F10B0000000000000001 /* LyricTapper/Views/ImageTakesView.swift in Sources */
 AA00F1070000000000000001 /* LyricTapper/Services/OverlayRenderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F0070000000000000001 /* LyricTapper/Services/OverlayRenderService.swift */; };
 AA00F1080000000000000001 /* LyricTapper/Services/CompositorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F0080000000000000001 /* LyricTapper/Services/CompositorService.swift */; };
 AA00F10C0000000000000001 /* LyricTapper/Views/AudioTrimView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F00C0000000000000001 /* LyricTapper/Views/AudioTrimView.swift */; };
+AA00F10D0000000000000001 /* LyricTapper/Views/WaveformTrimView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F00D0000000000000001 /* LyricTapper/Views/WaveformTrimView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -119,6 +120,7 @@ AA00F00A0000000000000001 /* LyricTapper/Views/LyricTakesView.swift */ = {isa = P
 AA00F00B0000000000000001 /* LyricTapper/Views/ImageTakesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricTapper/Views/ImageTakesView.swift; sourceTree = SOURCE_ROOT; };
 AA00F0080000000000000001 /* LyricTapper/Services/CompositorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricTapper/Services/CompositorService.swift; sourceTree = SOURCE_ROOT; };
 AA00F00C0000000000000001 /* LyricTapper/Views/AudioTrimView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricTapper/Views/AudioTrimView.swift; sourceTree = SOURCE_ROOT; };
+AA00F00D0000000000000001 /* LyricTapper/Views/WaveformTrimView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricTapper/Views/WaveformTrimView.swift; sourceTree = SOURCE_ROOT; };
 		C99F86772E9AF3AE00627C27 /* LyricTapper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LyricTapper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C99F867C2E9AF40B00627C27 /* Lyric Tapper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Lyric Tapper.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C99F868C2E9AF40D00627C27 /* Lyric TapperTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Lyric TapperTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -458,6 +460,7 @@ AA00F00C0000000000000001 /* LyricTapper/Views/AudioTrimView.swift */ = {isa = PB
                 AA00F10A0000000000000001 /* LyricTapper/Views/LyricTakesView.swift in Sources */,
                 AA00F10B0000000000000001 /* LyricTapper/Views/ImageTakesView.swift in Sources */,
                 AA00F10C0000000000000001 /* LyricTapper/Views/AudioTrimView.swift in Sources */,
+                AA00F10D0000000000000001 /* LyricTapper/Views/WaveformTrimView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
