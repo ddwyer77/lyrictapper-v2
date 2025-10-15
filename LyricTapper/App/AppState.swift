@@ -38,6 +38,7 @@ final class AppState: ObservableObject {
     @Published var waveform: [WaveformBin] = []
     @Published var showLogs: Bool = false
     @Published var logger: Logger = .shared
+    @Published var projectManager: ProjectManager = ProjectManager()
 
     // Keep a cached, security-scoped URL while in session
     private var scopedAudioURL: URL?
@@ -220,6 +221,48 @@ extension AppState {
         guard name.hasPrefix(base) else { return nil }
         let suffix = name.dropFirst(base.count)
         return Int(suffix)
+    }
+}
+
+// MARK: - Commit current sessions as takes (v2)
+extension AppState {
+    func commitCurrentLyricAsTake() {
+        let take = TrackLyricTake(
+            id: UUID().uuidString,
+            name: nextLyricTakeName(),
+            tapMode: (project.tapMode == .perSyllable ? .syllable : .word),
+            tapTimestamps: project.taps.map { $0.t },
+            timings: project.timings,
+            fontFamily: project.exportSettings.fontFamily,
+            fontFilePath: project.exportSettings.fontFilePath,
+            fontSize: project.exportSettings.fontSizePct ?? 0.18,
+            backgroundMode: .transparent,
+            previewPath: nil
+        )
+        projectV2.tracks.lyric.takes.append(take)
+        projectV2.tracks.lyric.currentTakeId = take.id
+        // autosave hint
+        // projectManager.markDirty()
+    }
+
+    func commitCurrentImageAsTake() {
+        let take = TrackImageTake(
+            id: UUID().uuidString,
+            name: nextImageTakeName(),
+            imageFolderBookmark: project.imageFolderBookmark,
+            includeSubfolders: project.includeSubfolders,
+            skipDuplicateImages: project.skipDuplicateImages,
+            imageCatalog: project.imageCatalog,
+            shuffleSeed: project.shuffleSeed ?? 0,
+            chosenOrder: project.imageFileIDs,
+            tapTimestamps: project.imageTapTimestamps,
+            intervals: project.imageIntervals,
+            previewPath: nil
+        )
+        projectV2.tracks.image.takes.append(take)
+        projectV2.tracks.image.currentTakeId = take.id
+        // autosave hint
+        // projectManager.markDirty()
     }
 }
 

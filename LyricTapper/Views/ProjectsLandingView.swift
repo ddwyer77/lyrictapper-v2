@@ -34,6 +34,22 @@ struct ProjectsLandingView: View {
                 Text(status).foregroundColor(.secondary)
                 Spacer()
             }
+            Divider()
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Recent Projects").font(.headline)
+                if app.projectManager.recent.isEmpty {
+                    Text("No recent projects yet").foregroundColor(.secondary)
+                } else {
+                    List(app.projectManager.recent, id: \.self) { url in
+                        HStack {
+                            Text(url.lastPathComponent)
+                            Spacer()
+                            Button("Open") { app.projectManager.open(url: url); app.stage = .dashboard }
+                        }
+                    }
+                    .frame(minHeight: 120, maxHeight: 220)
+                }
+            }
         }
         .padding(24)
     }
