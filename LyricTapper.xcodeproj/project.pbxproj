@@ -108,6 +108,7 @@ AA00F0010000000000000001 /* LyricTapper/Models/ProjectV2.swift */ = {isa = PBXFi
 AA00F0020000000000000001 /* LyricTapper/Services/ProjectManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricTapper/Services/ProjectManager.swift; sourceTree = SOURCE_ROOT; };
 AA00F0030000000000000001 /* LyricTapper/Views/ProjectsLandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricTapper/Views/ProjectsLandingView.swift; sourceTree = SOURCE_ROOT; };
 AA00011D0000000000000001 /* LyricTapper/Views/DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricTapper/Views/DashboardView.swift; sourceTree = SOURCE_ROOT; };
+AA00F0070000000000000001 /* LyricTapper/Services/OverlayRenderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricTapper/Services/OverlayRenderService.swift; sourceTree = SOURCE_ROOT; };
 		C99F86772E9AF3AE00627C27 /* LyricTapper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LyricTapper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C99F867C2E9AF40B00627C27 /* Lyric Tapper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Lyric Tapper.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C99F868C2E9AF40D00627C27 /* Lyric TapperTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Lyric TapperTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -215,6 +216,7 @@ AA00011D0000000000000001 /* LyricTapper/Views/DashboardView.swift */ = {isa = PB
 				AA0000180000000000000001 /* LyricTapper/Services/Logger.swift */,
                 ABF1F0010000000000000001 /* LyricTapper/Services/ImageSequenceService.swift */,
                 ABF1F0020000000000000001 /* LyricTapper/Services/ImageDecodeCache.swift */,
+				AA00F0070000000000000001 /* LyricTapper/Services/OverlayRenderService.swift */,
 				AA00F0020000000000000001 /* LyricTapper/Services/ProjectManager.swift */,
 			);
 			path = Services;
@@ -440,6 +442,7 @@ AA00011D0000000000000001 /* LyricTapper/Views/DashboardView.swift */ = {isa = PB
 				AA00F1020000000000000001 /* LyricTapper/Services/ProjectManager.swift in Sources */,
                 AA00F1050000000000000001 /* LyricTapper/Views/DashboardView.swift in Sources */,
                 AA00F1060000000000000001 /* LyricTapper/Views/MergeExportView.swift in Sources */,
+                AA00F1070000000000000001 /* LyricTapper/Services/OverlayRenderService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

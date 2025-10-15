@@ -59,6 +59,13 @@ struct ProjectsLandingView: View {
             let asset = AVAsset(url: url)
             let durationSeconds = CMTimeGetSeconds(asset.duration)
             app.setAudioDuration(seconds: durationSeconds)
+            // Initialize v2 project audio metadata
+            app.projectV2.audio.bookmark = bookmark
+            app.projectV2.audio.duration = durationSeconds
+            app.projectV2.audio.sampleRate = 48000
+            app.projectV2.settings.fps = 30
+            app.projectV2.settings.width = 1080
+            app.projectV2.settings.height = 1920
             app.stage = .dashboard
         } catch {
             status = "Failed: \(error.localizedDescription)"
