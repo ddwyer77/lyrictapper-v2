@@ -49,6 +49,7 @@ AA00F1060000000000000001 /* LyricTapper/Views/MergeExportView.swift in Sources *
 AA00F1040000000000000001 /* LyricTapper/Views/ProjectsLandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F0030000000000000001 /* LyricTapper/Views/ProjectsLandingView.swift */; };
 AA00F10A0000000000000001 /* LyricTapper/Views/LyricTakesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F00A0000000000000001 /* LyricTapper/Views/LyricTakesView.swift */; };
 AA00F10B0000000000000001 /* LyricTapper/Views/ImageTakesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F00B0000000000000001 /* LyricTapper/Views/ImageTakesView.swift */; };
+AA00F1070000000000000001 /* LyricTapper/Services/OverlayRenderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00F0070000000000000001 /* LyricTapper/Services/OverlayRenderService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
