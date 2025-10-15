@@ -142,10 +142,37 @@ enum CompositorService {
     }
 }
 
-// Internal helper bridging to existing private functions
-private func ExportService_renderImageTimeline(to url: URL, audioURL: URL, intervals: [ImageInterval], settings: ExportSettings) throws {
-    // Call the image flash writer used by ExportService
-    try renderImageFlashVideoOnly(to: url, audioURL: audioURL, intervals: intervals, width: settings.width, height: settings.height, fps: settings.fps)
+// Local helpers (duplicated from ExportService but file-private there)
+private func audioDuration(_ url: URL) throws -> Double {
+    let asset = AVAsset(url: url)
+    let seconds = CMTimeGetSeconds(asset.duration)
+    guard seconds.isFinite && seconds > 0 else { throw ExportServiceError.missingAudio }
+    return seconds
+}
+
+private func muxAudioVideo(audioURL: URL, videoURL: URL, destinationURL: URL) throws {
+    let composition = AVMutableComposition()
+    let audioAsset = AVAsset(url: audioURL)
+    let videoAsset = AVAsset(url: videoURL)
+
+    guard let videoTrack = videoAsset.tracks(withMediaType: .video).first else { throw ExportServiceError.compositionFailed }
+    let compVideo = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)!
+    try compVideo.insertTimeRange(CMTimeRange(start: .zero, duration: videoAsset.duration), of: videoTrack, at: .zero)
+
+    if let audioTrack = audioAsset.tracks(withMediaType: .audio).first {
+        let compAudio = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)!
+        try compAudio.insertTimeRange(CMTimeRange(start: .zero, duration: videoAsset.duration), of: audioTrack, at: .zero)
+    }
+
+    if FileManager.default.fileExists(atPath: destinationURL.path) { try? FileManager.default.removeItem(at: destinationURL) }
+    guard let export = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality) else { throw ExportServiceError.compositionFailed }
+    export.outputURL = destinationURL
+    export.outputFileType = .mp4
+    export.shouldOptimizeForNetworkUse = true
+    let g = DispatchGroup(); var exportErr: Error?; g.enter()
+    export.exportAsynchronously { if export.status != .completed { exportErr = export.error ?? ExportServiceError.compositionFailed }; g.leave() }
+    g.wait()
+    if let e = exportErr { throw e }
 }
 
 
