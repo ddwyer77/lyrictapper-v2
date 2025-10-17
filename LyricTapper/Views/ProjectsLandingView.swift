@@ -11,6 +11,10 @@ struct ProjectsLandingView: View {
     @State private var startTime: Double = 0
     @State private var endTime: Double = 0
     @State private var durationSec: Double = 0
+    @State private var playbackPosition: Double = 0
+    @State private var isPreviewing: Bool = false
+    @StateObject private var previewAudio = AudioService()
+    @State private var previewTimer: Timer? = nil
 
     var body: some View {
         VStack(spacing: 24) {
@@ -24,8 +28,14 @@ struct ProjectsLandingView: View {
                         .foregroundColor(.secondary)
                 }
                 if pickedAudioURL != nil {
-                    WaveformTrimView(bins: waveformBins, duration: durationSec, start: $startTime, end: $endTime)
+                    WaveformTrimView(bins: waveformBins, duration: durationSec, start: $startTime, end: $endTime, playhead: playbackPosition)
                     HStack(spacing: 12) {
+                        Button(action: togglePreview) {
+                            Label(isPreviewing ? "Pause" : "Play", systemImage: isPreviewing ? "pause.fill" : "play.fill")
+                        }
+                        Button(action: stopPreview) {
+                            Label("Stop", systemImage: "stop.fill")
+                        }
                         Text(String(format: "Start: %.2fs", startTime)).foregroundColor(.secondary)
                         Text(String(format: "End: %.2fs", endTime)).foregroundColor(.secondary)
                         Text(String(format: "Len: %.2fs", max(0, endTime - startTime))).foregroundColor(.secondary)
@@ -93,11 +103,15 @@ struct ProjectsLandingView: View {
                             }
                         }
                     }
+                    // Load audio for preview
+                    try? previewAudio.loadFile(url: url)
+                    previewAudio.duration = durationSec
                 }
             } else if waveformBins.isEmpty && !app.waveform.isEmpty {
                 waveformBins = app.waveform
             }
         }
+        .onDisappear { stopPreview() }
     }
 
     private func chooseAudio() {
@@ -111,6 +125,8 @@ struct ProjectsLandingView: View {
             pickedAudioURL = url
             status = "Picked audio: \(url.lastPathComponent)"
             prepareFor(url)
+            // Load into preview engine
+            try? previewAudio.loadFile(url: url)
         }
     }
 
@@ -201,6 +217,8 @@ extension ProjectsLandingView {
                     pickedAudioURL = outURL
                     status = String(format: "Trimmed to %.2fs", e - s)
                     prepareFor(outURL)
+                    // Reload preview to trimmed copy
+                    try? previewAudio.loadFile(url: outURL)
                     // Persist to v2 immediately so Save works without starting a tool
                     do {
                         let bm = try BookmarkService.createBookmark(for: outURL)
@@ -212,6 +230,46 @@ extension ProjectsLandingView {
                 DispatchQueue.main.async { status = "Trim failed: \(error.localizedDescription)" }
             }
         }
+    }
+
+    private func togglePreview() {
+        guard pickedAudioURL != nil else { return }
+        if isPreviewing {
+            previewAudio.pause()
+            isPreviewing = false
+            stopTimer()
+        } else {
+            // Seek to start and play; stop at end
+            previewAudio.seek(to: startTime)
+            try? previewAudio.play()
+            isPreviewing = true
+            startTimer()
+        }
+    }
+
+    private func stopPreview() {
+        previewAudio.stop()
+        isPreviewing = false
+        playbackPosition = startTime
+        stopTimer()
+    }
+
+    private func startTimer() {
+        stopTimer()
+        playbackPosition = startTime
+        previewTimer = Timer.scheduledTimer(withTimeInterval: 0.03, repeats: true) { _ in
+            let t = previewAudio.currentTimeSeconds()
+            playbackPosition = t
+            if t >= endTime {
+                stopPreview()
+            }
+        }
+        RunLoop.main.add(previewTimer!, forMode: .common)
+    }
+
+    private func stopTimer() {
+        previewTimer?.invalidate()
+        previewTimer = nil
     }
 }
 

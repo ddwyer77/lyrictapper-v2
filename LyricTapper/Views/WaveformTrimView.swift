@@ -5,6 +5,7 @@ struct WaveformTrimView: View {
     let duration: Double
     @Binding var start: Double
     @Binding var end: Double
+    var playhead: Double? = nil
 
     private let minLen: Double = 0.1
 
@@ -32,6 +33,15 @@ struct WaveformTrimView: View {
 
                 // Selection overlay
                 selectionOverlay(width: geo.size.width)
+
+                // Playhead
+                if let playhead = playhead, duration > 0 {
+                    let x = CGFloat(max(0, min(1, playhead / duration))) * geo.size.width
+                    Rectangle()
+                        .fill(Color.red)
+                        .frame(width: 2, height: 140)
+                        .position(x: x, y: 70)
+                }
             }
         }
         .frame(height: 140)
