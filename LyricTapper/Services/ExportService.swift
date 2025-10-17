@@ -161,7 +161,10 @@ enum ExportService {
                 let tempDir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
                 let videoOnlyURL = tempDir.appendingPathComponent("lyric_tapper_preview_\(UUID().uuidString).mp4")
                 try renderVideoOnly(to: videoOnlyURL, duration: try audioDuration(audioURL), timings: timings, settings: settings)
-                completion(.success(videoOnlyURL))
+                // Mux audio for preview playback with sound
+                let withAudioURL = tempDir.appendingPathComponent("lyric_tapper_preview_with_audio_\(UUID().uuidString).mp4")
+                try muxAudioVideo(audioURL: audioURL, videoURL: videoOnlyURL, destinationURL: withAudioURL)
+                completion(.success(withAudioURL))
             } catch {
                 completion(.failure(error))
             }
@@ -367,7 +370,10 @@ extension ExportService {
                 let tempDir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
                 let videoOnlyURL = tempDir.appendingPathComponent("image_flash_preview_\(UUID().uuidString).mp4")
                 try renderImageFlashVideoOnly(to: videoOnlyURL, audioURL: audioURL, intervals: intervals, width: Int(destinationSize.width), height: Int(destinationSize.height), fps: 30)
-                completion(.success(videoOnlyURL))
+                // Mux audio so preview includes sound
+                let withAudioURL = tempDir.appendingPathComponent("image_flash_preview_with_audio_\(UUID().uuidString).mp4")
+                try muxAudioVideo(audioURL: audioURL, videoURL: videoOnlyURL, destinationURL: withAudioURL)
+                completion(.success(withAudioURL))
             } catch { completion(.failure(error)) }
         }
     }
