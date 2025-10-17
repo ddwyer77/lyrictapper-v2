@@ -430,13 +430,16 @@ private func renderImageFlashVideoOnly(to outputURL: URL, audioURL: URL, interva
     var frameTime = CMTime.zero
     var frameIndex = 0
 
-    // Pre-resolve URLs for intervals (deduplicate keys to avoid crash)
+    // Pre-resolve URLs for intervals (deduplicate keys), and start security-scoped access
     var fileIdToURL: [ImageFileID: URL] = [:]
+    var startedScopedURLs: [URL] = []
     for iv in intervals {
         if fileIdToURL[iv.fileID] == nil, let url = BookmarkService.resolveBookmark(iv.fileID.urlBookmark) {
+            if url.startAccessingSecurityScopedResource() { startedScopedURLs.append(url) }
             fileIdToURL[iv.fileID] = url
         }
     }
+    defer { startedScopedURLs.forEach { $0.stopAccessingSecurityScopedResource() } }
     let decodeCache = ImageDecodeCache(targetWidth: width)
 
     while frameIndex < totalFrames {

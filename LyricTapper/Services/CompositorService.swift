@@ -45,9 +45,16 @@ enum CompositorService {
                 writer.startWriting(); writer.startSession(atSourceTime: .zero)
                 guard let pool = adaptor.pixelBufferPool else { throw ExportServiceError.writerFailed }
 
-                // Pre-resolve image URLs
+                // Pre-resolve image URLs and start security-scoped access (fixes first-run blank images)
                 var fileIdToURL: [ImageFileID: URL] = [:]
-                for iv in imageIntervals { if fileIdToURL[iv.fileID] == nil, let url = BookmarkService.resolveBookmark(iv.fileID.urlBookmark) { fileIdToURL[iv.fileID] = url } }
+                var startedScopedURLs: [URL] = []
+                for iv in imageIntervals {
+                    if fileIdToURL[iv.fileID] == nil, let url = BookmarkService.resolveBookmark(iv.fileID.urlBookmark) {
+                        if url.startAccessingSecurityScopedResource() { startedScopedURLs.append(url) }
+                        fileIdToURL[iv.fileID] = url
+                    }
+                }
+                defer { startedScopedURLs.forEach { $0.stopAccessingSecurityScopedResource() } }
                 let decodeCache = ImageDecodeCache(targetWidth: settings.width)
 
                 // Pacing
