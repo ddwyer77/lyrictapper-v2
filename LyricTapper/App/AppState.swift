@@ -184,6 +184,10 @@ extension AppState {
     func setCurrentImageTake(_ id: String?) {
         projectV2.tracks.image.currentTakeId = id
         // autosave hook
+        // Sync working image order with selected take for consistency in previews/exports
+        if let id, let take = projectV2.tracks.image.takes.first(where: { $0.id == id }), !take.chosenOrder.isEmpty {
+            project.imageFileIDs = take.chosenOrder
+        }
     }
 
     func duplicateLyricTake(_ id: String) {
@@ -255,6 +259,12 @@ extension AppState {
     }
 
     func commitCurrentImageAsTake() {
+        // Compute intervals from current taps + order to avoid stale/empty intervals
+        let computedIntervals = TimingService.computeImageIntervals(
+            taps: project.imageTapTimestamps,
+            audioDuration: project.audioDuration,
+            imageOrder: project.imageFileIDs
+        )
         let take = TrackImageTake(
             id: UUID().uuidString,
             name: nextImageTakeName(),
@@ -265,7 +275,7 @@ extension AppState {
             shuffleSeed: project.shuffleSeed ?? 0,
             chosenOrder: project.imageFileIDs,
             tapTimestamps: project.imageTapTimestamps,
-            intervals: project.imageIntervals,
+            intervals: computedIntervals,
             previewPath: nil
         )
         projectV2.tracks.image.takes.append(take)

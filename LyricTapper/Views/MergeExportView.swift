@@ -89,7 +89,19 @@ struct MergeExportView: View {
         let settings = RenderSettings(fps: 30, width: 1080, height: 1920)
         // Resolve takes based on current selections
         let imageTake = app.projectV2.tracks.image.takes.first(where: { $0.id == (selectedImageTakeId ?? app.projectV2.tracks.image.currentTakeId) })
-        let intervals = imageTake?.intervals ?? app.project.imageIntervals
+        let intervals: [ImageInterval]
+        if let t = imageTake, !t.intervals.isEmpty {
+            intervals = t.intervals
+        } else if let t = imageTake {
+            // Compute on the fly from take taps and chosen order if intervals missing
+            intervals = TimingService.computeImageIntervals(
+                taps: t.tapTimestamps,
+                audioDuration: app.project.audioDuration,
+                imageOrder: t.chosenOrder
+            )
+        } else {
+            intervals = app.project.imageIntervals
+        }
         var lyricTake: TrackLyricTake? = app.projectV2.tracks.lyric.takes.first(where: { $0.id == (selectedLyricTakeId ?? app.projectV2.tracks.lyric.currentTakeId) })
         // Fallback: if no current lyric take (or empty timings), build from v1 state
         if lyricTake == nil || (lyricTake?.timings.isEmpty == true) {
@@ -113,7 +125,18 @@ struct MergeExportView: View {
         guard let audioURL = resolveAudioURL() else { status = "Select accessible audio first"; return }
         let settings = RenderSettings(fps: 30, width: 1080, height: 1920)
         let imageTake = app.projectV2.tracks.image.takes.first(where: { $0.id == (selectedImageTakeId ?? app.projectV2.tracks.image.currentTakeId) })
-        let intervals = imageTake?.intervals ?? app.project.imageIntervals
+        let intervals: [ImageInterval]
+        if let t = imageTake, !t.intervals.isEmpty {
+            intervals = t.intervals
+        } else if let t = imageTake {
+            intervals = TimingService.computeImageIntervals(
+                taps: t.tapTimestamps,
+                audioDuration: app.project.audioDuration,
+                imageOrder: t.chosenOrder
+            )
+        } else {
+            intervals = app.project.imageIntervals
+        }
         var lyricTake: TrackLyricTake? = app.projectV2.tracks.lyric.takes.first(where: { $0.id == (selectedLyricTakeId ?? app.projectV2.tracks.lyric.currentTakeId) })
         if lyricTake == nil || (lyricTake?.timings.isEmpty == true) { lyricTake = makeLyricTakeFromV1() }
         status = "Rendering preview…"
