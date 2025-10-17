@@ -1,6 +1,7 @@
 import SwiftUI
 import AVFoundation
 import AppKit
+import AVKit
 
 struct MergeExportView: View {
     @ObservedObject var app: AppState
@@ -10,6 +11,7 @@ struct MergeExportView: View {
     @State private var imageOffsetMs: Int = 0
     @State private var selectedLyricTakeId: String? = nil
     @State private var selectedImageTakeId: String? = nil
+    @State private var previewPlayer: AVPlayer? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -43,9 +45,35 @@ struct MergeExportView: View {
                 Stepper("Lyric Offset (ms): \(lyricOffsetMs)", value: $lyricOffsetMs, in: -5000...5000, step: 10)
                 Stepper("Image Offset (ms): \(imageOffsetMs)", value: $imageOffsetMs, in: -5000...5000, step: 10)
                 Spacer()
+                Button("Render Preview") { renderPreview() }
                 Button("Export Final") { exportFinal() }
             }
             Text(status).foregroundColor(.secondary)
+            Divider()
+            Group {
+                if let player = previewPlayer {
+                    GeometryReader { geo in
+                        // Use 1080x1920 default unless we add editable settings here
+                        let targetAspect = CGFloat(1080) / CGFloat(1920)
+                        let width = geo.size.width
+                        let height = min(geo.size.height, width / targetAspect)
+                        PlayerView(player: player)
+                            .frame(width: width, height: height)
+                            .background(Color.black.opacity(0.85))
+                            .cornerRadius(6)
+                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.3)))
+                    }
+                    .frame(minHeight: 320)
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 6).fill(Color(NSColor.windowBackgroundColor))
+                        Text("Render Preview to see a merged video here")
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(minHeight: 220)
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.3)))
+                }
+            }
             Spacer()
         }
         .padding(24)
@@ -76,6 +104,27 @@ struct MergeExportView: View {
                     NSWorkspace.shared.activateFileViewerSelecting([url])
                 case .failure(let err):
                     status = "Export failed: \(err.localizedDescription)"
+                }
+            }
+        }
+    }
+
+    private func renderPreview() {
+        guard let audioURL = resolveAudioURL() else { status = "Select accessible audio first"; return }
+        let settings = RenderSettings(fps: 30, width: 1080, height: 1920)
+        let imageTake = app.projectV2.tracks.image.takes.first(where: { $0.id == (selectedImageTakeId ?? app.projectV2.tracks.image.currentTakeId) })
+        let intervals = imageTake?.intervals ?? app.project.imageIntervals
+        var lyricTake: TrackLyricTake? = app.projectV2.tracks.lyric.takes.first(where: { $0.id == (selectedLyricTakeId ?? app.projectV2.tracks.lyric.currentTakeId) })
+        if lyricTake == nil || (lyricTake?.timings.isEmpty == true) { lyricTake = makeLyricTakeFromV1() }
+        status = "Rendering preview…"
+        CompositorService.exportFinal(audioURL: audioURL, imageIntervals: intervals, settings: settings, lyricTake: lyricTake, lyricOffsetMs: lyricOffsetMs, imageOffsetMs: imageOffsetMs) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let url):
+                    status = "Preview ready"
+                    previewPlayer = AVPlayer(url: url)
+                case .failure(let err):
+                    status = "Preview failed: \(err.localizedDescription)"
                 }
             }
         }
