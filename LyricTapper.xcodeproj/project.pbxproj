@@ -347,6 +347,10 @@ AA00F00D0000000000000001 /* LyricTapper/Views/WaveformTrimView.swift */ = {isa =
 				LastUpgradeCheck = 1500;
 				ORGANIZATIONNAME = "";
 				TargetAttributes = {
+					AA0005010000000000000001 = {
+						DevelopmentTeam = 49F95M9WQN;
+						ProvisioningStyle = Automatic;
+					};
 					C99F867B2E9AF40B00627C27 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -642,9 +646,9 @@ AA00F00D0000000000000001 /* LyricTapper/Views/WaveformTrimView.swift */ = {isa =
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LyricTapper/Entitlements/LyricTapper.mas.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 49F95M9WQN;
 				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 49F95M9WQN;
 				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LyricTapper/Info.plist;
