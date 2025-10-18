@@ -1,0 +1,176 @@
+Lyric Tapper v2 – Deep Context for GPT-5 Planning
+
+High-level
+- Platform: macOS app built with SwiftUI and AVFoundation.
+- Workflow: Project-first, two-track model (Lyric track + Image Flash track), with a Merge & Export stage.
+- Persistence: Schema v2 JSON projects with migration from v1. Security-scoped bookmarks used for user-selected audio and image folders/files.
+- Core features:
+  - Landing page: choose audio, waveform-based trim, immediate preview with audio, start Lyric or Image Flash.
+  - Lyric Tool: tap words/syllables, fine-tune timings, export as a standalone video or transparent overlay, previews with audio.
+  - Image Flash: tap images to the beat (shuffle-bag order), edit intervals, export, and preview with audio.
+  - Takes system: multiple takes per track; set current, duplicate, delete, and mini previews.
+  - Merge & Export: composite the current Lyric Take over the current Image Take, aligned to project audio, with offsets, preview (with audio), and export presets.
+
+App Architecture Overview
+- SwiftUI-driven navigation via AppState.Stage with sidebar routing and a top-bar save indicator.
+- Services modularize audio playback, waveform analysis, bookmarks, exports, logging, and image decoding.
+- Project v2 model introduces distinct tracks, takes, merge settings, and render settings.
+- Robust sandboxing: bookmarks are resolved and security-scoped access is started for all first-run renders.
+
+Major Components (by area)
+
+State and Routing
+- File: LyricTapper/App/AppState.swift
+  - Stage enum: .home, .lyricTakes, .loadAudio, .enterLyrics, .tap, .edit, .export, .imageTakes, .loadImages, .imageTap, .imageEdit, .imageExport, .mergeExport (legacy .dashboard routes to Landing).
+  - switchTool(_:): navigates to first viable stage (skips Load Audio if already selected; Image Flash jumps to Load Images).
+  - Project v2 state: @Published var projectV2: ProjectV2 = ProjectV2.newDefault().
+  - Takes management: commitCurrentLyricAsTake(), commitCurrentImageAsTake(), setCurrentLyricTake(), setCurrentImageTake(), duplicate/delete for both tracks.
+    - commitCurrentImageAsTake() computes intervals from current taps/image order to avoid empty/stale intervals.
+    - setCurrentImageTake syncs working order (project.imageFileIDs) from the selected take’s chosenOrder.
+  - Timings: recomputeTimings() supports per-word and per-syllable modes and persists to v1 shim (project) for legacy views.
+  - Bookmark handling: setAudioBookmark stores and maintains a cached security-scoped URL for waveform and playback.
+  - Waveform caching: app.waveform cached across views; recomputed only when needed.
+
+Models
+- v1 (LyricTapper/Models/Project.swift):
+  - Project: audioPathBookmark, audioDuration, lyricsRaw, tokens, taps, timings, offsetMs, exportSettings, mode.
+  - Image Flash fields: imageFolderBookmark, includeSubfolders, skipDuplicateImages, imageFileIDs (order), imageCatalog, shuffleSeed, imageTapTimestamps, imageIntervals.
+  - ExportSettings: width, height, fps, font family/file, font size percent, text color.
+  - ImageFileID, ImageMeta, ImageInterval (Identifiable via derived id), Tap, WordTiming.
+- v2 (LyricTapper/Models/ProjectV2.swift):
+  - ProjectV2: project meta, audio (bookmark/duration/sampleRate/leadIn), tracks (lyric/image), merge settings, render settings, optional lyricsRaw.
+  - LyricTrack: [TrackLyricTake], currentTakeId.
+  - ImageTrack: [TrackImageTake], currentTakeId.
+  - TrackLyricTake: id, name, tapModeV2 (.word/.syllable), tapTimestamps, timings, font family/file, fontSize (relative), backgroundMode (.transparent/.white), previewPath.
+  - TrackImageTake: id, name, imageFolderBookmark, includeSubfolders, skipDuplicateImages, imageCatalog, shuffleSeed, chosenOrder ([ImageFileID]), tapTimestamps, intervals, previewPath.
+  - MergeSettings: overlaySource (.rerender/.alphaMovie), lyricOffsetMs, imageOffsetMs, exportPreset (.Web_H264/.Master_ProRes422).
+  - RenderSettings: fps, width, height.
+
+Persistence and Project Management
+- ProjectStore (LyricTapper/Services/ProjectStore.swift):
+  - loadV2/saveV2 for schema v2; migrateV1ToV2 for legacy project files (creates single lyric take and carries relevant settings).
+  - loadV1 for legacy reads (used as fallback when v2 decode fails).
+- ProjectManager (LyricTapper/Services/ProjectManager.swift):
+  - current (ProjectV2?), currentURL, dirty flag, recent project list, autosave loop.
+  - open(url:), save(to:), saveAs(), newProject(withAudio:).
+- BookmarkService: createBookmark(for:), resolveBookmark(_), withScopedAccess(bookmark:body:), centralized security-scoped access.
+
+Audio and Playback
+- AudioService (LyricTapper/Services/AudioService.swift):
+  - AVAudioEngine + AVAudioPlayerNode playback; supports play/pause/stop/seek/restart.
+  - currentTimeSeconds() exposes playback time; duration maintained from AVAudioFile.
+- WaveformService: computeRMSBins(url:targetBins:), used to draw waveform and for trimming UI.
+- Landing audio trim preview: ProjectsLandingView integrates an AudioService instance for trim previews and renders a moving playhead in WaveformTrimView.
+
+Image Handling and Performance
+- ImageSequenceService: builds image catalog from folder bookmark; supports includeSubfolders and duplicate skipping; produces a stable order using a shuffle-bag.
+- ImageDecodeCache: NSCache-backed decode/scale pipeline to render CGImages scaled-to-width; includes preload to reduce stutters during tapping and export.
+
+Export and Composition
+- ExportService (LyricTapper/Services/ExportService.swift):
+  - renderVideoOnly(): Core Graphics text rendering into CVPixelBuffer via AVAssetWriter (lyric-only pipeline).
+  - export(): video-only render then mux with original audio via AVMutableComposition.
+  - renderPreviewFile(): muxes audio into the preview for sound during playback in ExportView.
+  - Image Flash: renderImageFlashVideoOnly() draws images with letterboxing (fit-to-width); renderImageFlashPreview() and exportImageFlash() mux audio as well.
+  - Performance: ensures adaptor.isReadyForMoreMediaData, frame stepping with CMTime, robust writer finish and error handling.
+- OverlayRenderService: exports transparent lyric overlay movies (HEVC-alpha; falls back to ProRes 4444). Also provides pixel-buffer rendering for overlays.
+- CompositorService (LyricTapper/Services/CompositorService.swift):
+  - exportFinal(): merges image frames (letterboxed to width) with lyric overlay using Core Text; precise vertical centering via CTLineGetImageBounds.
+  - Applies per-track offsets (lyricOffsetMs/imageOffsetMs), supports fallback to v1 timings when no lyric take.
+  - Muxes final video with original audio.
+  - Critical fix: starts security-scoped access for all resolved image URLs for the entire render to avoid first-run blank images.
+
+UI / Views (key screens)
+- ContentView: routes by AppState.Stage; toolbar shows logs toggle and “Saved • / • Unsaved” indicator based on ProjectManager.dirty.
+- SidebarView: always-visible sections for Home, Lyric Tool (Takes, Load Audio, Enter Lyrics, Tap, Edit, Export), Image Flash (Takes, Load Images, Tap, Edit, Export), and Merge & Export.
+- ProjectsLandingView: audio picker; waveform trim (WaveformTrimView) with draggable handles; play/pause/stop preview (red playhead) limited to selection; “Trim Audio & Use Copy” and “Use Full Audio”; start Lyric or Image Flash; open/save projects; recent projects list.
+- WaveformTrimView: draws waveform bars via Canvas; selection overlay; draggable handles; optional red playhead.
+- LoadLyricsView: pulls lyrics from current lyric take if present; otherwise v1 fallback; keeps v2 synced on edit.
+- TapView/EditView/ExportView (Lyric Tool): standard lyric tap/edit/export flow; ExportView renders preview with audio and exports standalone or overlay movies.
+- ImageFlashTapView: fixed preview size, fit-to-width letterboxing; KeyCaptureView records taps during audio playback; resolves and decodes next image(s); Commit as Take triggers take creation and navigates to ImageFlashEditView.
+- ImageFlashEditView: interval list with swap/delete; shows thumbnails via Image(nsImage:).
+- ImageFlashExportView: renders preview with audio and exports (H.264).
+- MergeExportView: pick current Lyric and Image takes; adjust per-track offsets; Render Preview (with audio); Export Final; handles missing intervals by computing them on-the-fly from the selected take’s taps and order.
+- LyricTakesView / ImageTakesView: list takes, rename (if implemented), duplicate, delete, set as current; mini previews.
+- LogsPanelView: UI to surface Logger output; toggled in toolbar.
+
+Notable Fixes and Improvements
+- First-run image blanking fixed via security-scoped access; also applied to Image Flash preview export.
+- Image Flash preview and export letterboxing matches preview.
+- Lyric vertical centering corrected in compositor using Core Text bounds.
+- Preview players across Lyric, Image Flash, and Merge now include audio by muxing the temporary preview file.
+- Image FileID deduping in ExportService to avoid runtime crashes when building the file map.
+- Sidebar always shows both tools for easier navigation.
+- Trim preview on landing added with playhead and end-bracket stopping.
+- Merge preview added to Merge & Export view.
+
+One-track Workflows
+- If only Lyric or only Image take is present, dashboard/merge logic hides merge card and shows “Export Lyric-Only” or “Export Image-Only” CTAs (concept supported; UI simplified around Landing + tool pages after dashboard removal).
+
+Versioning / Build / Signing
+- Target: LyricTapper (single main app target).
+- Release configuration (current):
+  - PRODUCT_BUNDLE_IDENTIFIER = com.noise.LyricTapper (production ID; Debug uses .dev)
+  - MARKETING_VERSION = 1.4.0
+  - CURRENT_PROJECT_VERSION = 3
+  - CODE_SIGN_STYLE = Automatic; DEVELOPMENT_TEAM = 49F95M9WQN
+  - No manual CODE_SIGN_IDENTITY override in Release; Organizer chooses Apple Distribution.
+  - ONLY_ACTIVE_ARCH (Release) = No; architectures standard (arm64, x86_64).
+  - Entitlements: LyricTapper/Entitlements/LyricTapper.mas.entitlements (MAS sandbox).
+  - macOS deployment target: 13.0.
+- ExportOptions.plist (root): App Store method, automatic signing, team 49F95M9WQN, uploadSymbols true.
+
+Security & Sandboxing
+- All user-selected file/folder access is via bookmarks with .withSecurityScope.
+- On long-running renders, all images used are resolved once and security-scoped access is kept open until completion.
+- Audio URLs use a cached security-scoped URL during a session for waveform and playback.
+
+Performance
+- AVAssetWriter rendering is frame-stepped with backpressure checks.
+- ImageDecodeCache preloads lookahead images during Image Flash tapping to reduce stutters.
+- Most non-UI operations performed on background queues; Logger dispatches to main safely.
+
+Current UX Flow (condensed)
+1) Launch → Landing (ProjectsLandingView)
+   - Pick audio → waveform appears → trim (optional) with audio preview.
+   - Start Lyric or Image Flash.
+2) Lyric Tool
+   - Enter Lyrics → Tap (word/syllable) → Edit → Export (preview with audio; export standalone/overlay).
+   - Commit takes via “Commit as Take” actions.
+3) Image Flash
+   - Load Images → Tap → Edit → Export (preview with audio).
+   - Commit takes; shuffle-bag order per take.
+4) Merge & Export
+   - Pick Lyric + Image takes; set offsets; Render Preview with audio; Export Final (Web/Master).
+
+Edge Cases Handled
+- Missing lyric take at merge: fallback to v1 timings derived from current v1 state.
+- Empty image intervals at merge: computed on the fly from the selected take’s taps and chosen order.
+- First-run image renders: sandbox access started and retained during render.
+
+What to Keep Stable (no regressions)
+- Signing and entitlements for MAS submission.
+- Existing export paths and formats.
+- Performance parity or better in all render paths.
+
+Ideas for Next Iterations (optional prompts)
+- Batch export presets across takes.
+- Live overlay preview (layer-backed) during tapping.
+- Advanced typography: outlines, shadows, per-word styles.
+- Audio ducking and intro/outro slates.
+- In-app font manager with previews.
+- Per-interval transitions for Image Flash.
+- Multi-track audio lead-in/out and markers.
+
+Quick Directory Map (selected)
+- LyricTapper/App: AppState.swift
+- LyricTapper/Models: Project.swift (v1), ProjectV2.swift (v2)
+- LyricTapper/Services: AudioService.swift, WaveformService.swift, BookmarkService.swift, ProjectStore.swift, ExportService.swift, OverlayRenderService.swift, CompositorService.swift, ProjectManager.swift, ImageSequenceService.swift, ImageDecodeCache.swift, Logger.swift
+- LyricTapper/Views: ProjectsLandingView.swift, WaveformTrimView.swift, SidebarView.swift, ContentView.swift, LoadAudioView.swift, LoadLyricsView.swift, TapView.swift, EditView.swift, ExportView.swift, LoadImagesView.swift, ImageFlashTapView.swift, ImageFlashEditView.swift, ImageFlashExportView.swift, MergeExportView.swift, LyricTakesView.swift, ImageTakesView.swift, LogsPanelView.swift, SystemFontPickerView.swift, PlayerView.swift, WaveformScrubView.swift
+
+Notes for GPT-5
+- Treat ProjectV2 as the source of truth; v1 Project still powers some legacy views but is kept in sync where needed.
+- Always start security-scoped access for any bookmarked URLs used in background operations or long-running exports.
+- For merges, prefer TrackImageTake.intervals if present; otherwise compute from (tapTimestamps, chosenOrder) to avoid stale state.
+- For lyric overlay centering, continue using Core Text bounds (CTLineGetImageBounds) and explicit textMatrix/position.
+- Maintain preview-with-audio behavior by muxing temp video with original audio before handing to AVPlayer.
